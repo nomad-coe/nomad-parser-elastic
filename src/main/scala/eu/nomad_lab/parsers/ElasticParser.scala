@@ -21,14 +21,12 @@ object ElasticParser extends SimpleExternalParserGenerator(
       )) :: Nil
   ),
   mainFileTypes = Seq("text/.*"),
-  mainFileRe = """\s*=================================================+\s*
-\s*\|\s*EXCITING\s(?<version>\S*) started\s*=
-(?:\s*\|\sversion hash id:\s*(?<hashId>\S*)\s*=)?""".r,
-  cmd = Seq(DefaultPythonInterpreter.pythonExe(), "${envDir}/parsers/exciting/parser/parser-exciting/parser_exciting.py",
+  mainFileRe = """\s*Order of elastic constants\s*=\s*[0-9]+\s*""".r,
+  cmd = Seq(DefaultPythonInterpreter.pythonExe(), "${envDir}/parsers/elastic/parser/parser-elastic/parser_elastic.py",
     "--uri", "${mainFileUri}", "${mainFilePath}"),
   resList = Seq(
     "parser-elastic/parser_elastic.py",
-    "parser-exciting/setup_paths.py",
+    "parser-elastic/setup_paths.py",
     "nomad_meta_info/public.nomadmetainfo.json",
     "nomad_meta_info/common.nomadmetainfo.json",
     "nomad_meta_info/meta_types.nomadmetainfo.json",
