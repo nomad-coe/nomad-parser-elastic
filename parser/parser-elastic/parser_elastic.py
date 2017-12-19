@@ -34,9 +34,9 @@ class SampleContext(object):
 #        print("SGN=",SGN)
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
-        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####
-        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####
-#        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######
+#        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####
+#        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####
+        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
