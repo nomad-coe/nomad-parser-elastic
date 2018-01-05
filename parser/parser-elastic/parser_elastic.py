@@ -26,7 +26,7 @@ class SampleContext(object):
         # allows to reset values if the same superContext is used to parse different files
         self.initialize_values()
 
-    def onClose_section_run(self, backend, gIndex, section):
+    def onClose_section_run(self, backend, gIndex, section):        
         pass
 
     def onClose_section_method(self, backend, gIndex, section):
@@ -34,9 +34,9 @@ class SampleContext(object):
 #        print("SGN=",SGN)
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
-#        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####
-#        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####
-        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######
+        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####
+        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####
+#        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
@@ -398,28 +398,81 @@ class SampleContext(object):
                     ECMat[i][j] = float(ECMat[i][j])
                     complMat[i][j] = float(complMat[i][j])
 
-            backend.addValue("x_elastic_deformation_types", defTyp)
-            backend.addValue("x_elastic_number_of_deformations", defNum)
-            backend.addValue("x_elastic_energy_strain_eta_values", eta)
-            backend.addValue("x_elastic_energy_strain_energy_values", energy)
-            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_2nd',polFit2)
-            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_4th',polFit4)
-            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_6th',polFit6)
-            backend.addValue('x_elastic_d2E_d2E_values_2nd',d2E2_val)
-            backend.addValue('x_elastic_d2E_d2E_values_4th',d2E4_val)
-            backend.addValue('x_elastic_d2E_d2E_values_6th',d2E6_val)
-            backend.addValue('x_elastic_d2E_eta_values_2nd',d2E2_eta)
-            backend.addValue('x_elastic_d2E_eta_values_4th',d2E4_eta)
-            backend.addValue('x_elastic_d2E_eta_values_6th',d2E6_eta)
-            backend.addValue('x_elastic_cross_number_of_eta_polinomial_2nd',polFit2Cross)
-            backend.addValue('x_elastic_cross_number_of_eta_polinomial_4th',polFit4Cross)
-            backend.addValue('x_elastic_cross_number_of_eta_polinomial_6th',polFit6Cross)
-            backend.addValue('x_elastic_cross_cross_values_2nd',CrossVal2_val)
-            backend.addValue('x_elastic_cross_cross_values_4th',CrossVal4_val)
-            backend.addValue('x_elastic_cross_cross_values_6th',CrossVal6_val)
-            backend.addValue('x_elastic_cross_eta_values_2nd',CrossVal2_eta)
-            backend.addValue('x_elastic_cross_eta_values_4th',CrossVal4_eta)
-            backend.addValue('x_elastic_cross_eta_values_6th',CrossVal6_eta)
+#            backend.addValue("x_elastic_deformation_types", defTyp)
+#            backend.addValue("x_elastic_number_of_deformations", defNum)
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "energy")
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta))
+            backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+            backend.addValue("x_elastic_strain_diagram_values", energy)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2Cross)
+            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal2_eta)
+            backend.addValue("x_elastic_strain_diagram_values", CrossVal2_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4Cross)
+            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal4_eta)
+            backend.addValue("x_elastic_strain_diagram_values", CrossVal4_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6Cross)
+            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal6_eta)
+            backend.addValue("x_elastic_strain_diagram_values", CrossVal6_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "d2E")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2)
+            backend.addValue("x_elastic_strain_diagram_eta_values", d2E2_eta)
+            backend.addValue("x_elastic_strain_diagram_values", d2E2_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "d2E")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4)
+            backend.addValue("x_elastic_strain_diagram_eta_values", d2E4_eta)
+            backend.addValue("x_elastic_strain_diagram_values", d2E4_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "d2E")
+            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6)
+            backend.addValue("x_elastic_strain_diagram_eta_values", d2E6_eta)
+            backend.addValue("x_elastic_strain_diagram_values", d2E6_val)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_2nd',polFit2)
+#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_4th',polFit4)
+#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_6th',polFit6)
+#            backend.addValue('x_elastic_d2E_d2E_values_2nd',d2E2_val)
+#            backend.addValue('x_elastic_d2E_d2E_values_4th',d2E4_val)
+#            backend.addValue('x_elastic_d2E_d2E_values_6th',d2E6_val)
+#            backend.addValue('x_elastic_d2E_eta_values_2nd',d2E2_eta)
+#            backend.addValue('x_elastic_d2E_eta_values_4th',d2E4_eta)
+#            backend.addValue('x_elastic_d2E_eta_values_6th',d2E6_eta)
+#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_2nd',polFit2Cross)
+#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_4th',polFit4Cross)
+#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_6th',polFit6Cross)
+#            backend.addValue('x_elastic_cross_cross_values_2nd',CrossVal2_val)
+#            backend.addValue('x_elastic_cross_cross_values_4th',CrossVal4_val)
+#            backend.addValue('x_elastic_cross_cross_values_6th',CrossVal6_val)
+#            backend.addValue('x_elastic_cross_eta_values_2nd',CrossVal2_eta)
+#            backend.addValue('x_elastic_cross_eta_values_4th',CrossVal4_eta)
+#            backend.addValue('x_elastic_cross_eta_values_6th',CrossVal6_eta)
             backend.addValue('x_elastic_2nd_order_constants_notation_matrix',voigtMat)
             backend.addValue('x_elastic_2nd_order_constants_matrix',ECMat)
             backend.addValue('x_elastic_2nd_order_constants_compliance_matrix',complMat)
@@ -437,6 +490,8 @@ class SampleContext(object):
             backend.addValue('x_elastic_Hill_Poisson_ratio',nu_H)
             backend.addValue('x_elastic_eigenvalues',EC_eigen)
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
+            backend.addValue("x_elastic_deformation_types", defTyp)
+            backend.addValue("x_elastic_number_of_deformations", defNum)
 
         elif ordr == 3:
             f = open ('ElaStic_'+str(ordr)+'rd.out','r')
@@ -931,8 +986,16 @@ class SampleContext(object):
                 ECmat[5][5][2] = C144
 
 #            print("ECmat= ",ECmat)
+            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+            backend.addValue("x_elastic_strain_diagram_type", "energy")
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta))
+            backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+            backend.addValue("x_elastic_strain_diagram_values", energy)
+            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
             backend.addValue('x_elastic_3rd_order_constants_matrix',ECmat)
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
+            backend.addValue("x_elastic_deformation_types", defTyp)
+            backend.addValue("x_elastic_number_of_deformations", defNum)
 
 mainFileDescription = \
            SM(name = 'root',
