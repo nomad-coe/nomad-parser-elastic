@@ -15,6 +15,8 @@ class SampleContext(object):
         self.parser = None
         self.mainFilePath = None
         self.mainFile = None
+        self.etaEC = []
+        self.fitEC = []
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse different files"""
@@ -323,16 +325,18 @@ class SampleContext(object):
         elif ordr == 3:
             f = open ('ElaStic_'+str(ordr)+'rd.in','r')
 
-        etaEC = []
-        fitEC = []
+#        self.etaEC = []
+#        self.fitEC = []
         EC_eigen = []
 
         for i in range(1, ECs+1):
             s = f.readline()
             s = s.strip()
             dummy, etaEC_dummy, fitEC_dummy = s.split()
-            etaEC.append(etaEC_dummy)
-            fitEC.append(fitEC_dummy)
+            self.etaEC.append(float(etaEC_dummy))
+            self.fitEC.append(int(fitEC_dummy))
+
+        f.close()
 
         if ordr == 2:
             f = open ('ElaStic_'+str(ordr)+'nd.out','r')
@@ -402,13 +406,13 @@ class SampleContext(object):
 #            backend.addValue("x_elastic_number_of_deformations", defNum)
             elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
             backend.addValue("x_elastic_strain_diagram_type", "energy")
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta))
+            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
             backend.addValue("x_elastic_strain_diagram_eta_values", eta)
             backend.addValue("x_elastic_strain_diagram_values", energy)
             backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
             elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
             backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
             backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2Cross)
             backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal2_eta)
@@ -416,7 +420,7 @@ class SampleContext(object):
             backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
             elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
             backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
             backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4Cross)
             backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal4_eta)
@@ -424,7 +428,7 @@ class SampleContext(object):
             backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
             elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross")
+            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
             backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
             backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6Cross)
             backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal6_eta)
@@ -492,6 +496,10 @@ class SampleContext(object):
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
             backend.addValue("x_elastic_deformation_types", defTyp)
             backend.addValue("x_elastic_number_of_deformations", defNum)
+            elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
+            backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
+            backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+            backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
 
         elif ordr == 3:
             f = open ('ElaStic_'+str(ordr)+'rd.out','r')
@@ -996,6 +1004,10 @@ class SampleContext(object):
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
             backend.addValue("x_elastic_deformation_types", defTyp)
             backend.addValue("x_elastic_number_of_deformations", defNum)
+            elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
+            backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
+            backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+            backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
 
 mainFileDescription = \
            SM(name = 'root',
