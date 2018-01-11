@@ -1,11 +1,12 @@
 from builtins import object
 import setup_paths
 import numpy as np
+from nomadcore.unit_conversion.unit_conversion import convert_unit
 from nomadcore.parser_backend import JsonParseEventsWriterBackend
 from nomadcore.simple_parser import mainFunction
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
-import os, sys, json
+import os, sys, json, elastic_parser_input
 
 class SampleContext(object):
 
@@ -17,6 +18,7 @@ class SampleContext(object):
         self.mainFile = None
         self.etaEC = []
         self.fitEC = []
+        self.SGN = 0
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse different files"""
@@ -31,14 +33,46 @@ class SampleContext(object):
     def onClose_section_run(self, backend, gIndex, section):        
         pass
 
+    def onClose_section_system(self, backend, gIndex, section):
+        self.SGN = int(section["x_elastic_space_group_number"][0])
+        mainFile = self.parser.fIn.fIn.name
+        dirPath = os.path.dirname(mainFile)
+        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     YES
+        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           YES
+#        print("self.mainFileUri=",self.mainFileUri)
+#        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES
+#        print("dirPath=",dirPath)
+#        for files in os.listdir(self.mainFilePath):
+        for files in os.listdir(dirPath):
+            if files[-3:] == "xml":
+                inputFile = files
+#                print("os.path.cwd()=",os.getcwd())
+#                print("inputFile=",inputFile)
+            else:
+                pass
+#        print("dirPath=",dirPath)
+        os.chdir(self.mainFilePath)
+#        os.chdir(dirPath)
+        with open(inputFile) as f:
+            elastic_parser_input.parseInput(f, backend)
+#        print(os.listdir(dirPath))
+#        if os.path.exist([-3:]) == "xml":
+#            inputFile = os.path.exist()
+#        inputFile = os.path.join(dirPath, "input.xml")
+#        print("inputFile=",inputFile)
+
     def onClose_section_method(self, backend, gIndex, section):
-        SGN = int(section["x_elastic_space_group_number"][0])
+        ha_per_joule = convert_unit(1, "hartree", "J")
+#        giga = 10**9
+        giga = 1.0
+#        SGN = int(section["x_elastic_space_group_number"][0])
 #        print("SGN=",SGN)
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
-        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####
-        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####
-#        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######
+#        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     NO
+#        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           NO
+        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######      NO
+#        print("2222222=",self.mainFilePath)
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
@@ -49,7 +83,7 @@ class SampleContext(object):
         polFit4Cross = polFit4 - 1
         polFit6Cross = polFit6 - 1
         ext_uri = []
-        os.chdir(self.mainFilePath)
+    #    os.chdir(self.mainFilePath)
 
 ###################NEW###################
 #        for def_str in os.listdir():
@@ -148,7 +182,7 @@ class SampleContext(object):
                s = s.strip()
                dummy_eta, dummy_energy = s.split()
                eta[-1].append(float(dummy_eta))
-               energy[-1].append(float(dummy_energy))
+               energy[-1].append(float(dummy_energy)*ha_per_joule)
             os.chdir('../')
         
         defTyp = []
@@ -169,34 +203,35 @@ class SampleContext(object):
                 for i in range(0,6):
                     s[i] = s[i].strip()
 #                    print("s[i]=",s[i])
-                    if s[i] == '0.0':
-                        defTyp[-1].append(float(s[i]))
-                    elif s[i] == 'eta':
-                        defTyp[-1].append(mdr)
-                    elif s[i] == '2eta':
-                        defTyp[-1].append(2.0*mdr)
-                    elif s[i] == '-eta':
-                        defTyp[-1].append(-mdr)
-                    elif s[i] == '.5eta':
-                        defTyp[-1].append(0.5*mdr)
-                    elif s[i] == '-2eta':
-                        defTyp[-1].append(-2.0*mdr)
-                    elif s[i] == '3eta':
-                        defTyp[-1].append(3.0*mdr)
-                    elif s[i] == '4eta':
-                        defTyp[-1].append(4.0*mdr)
-                    elif s[i] == '5eta':
-                        defTyp[-1].append(5.0*mdr)
-                    elif s[i] == '6eta':
-                        defTyp[-1].append(6.0*mdr)
-                    elif s[i] == '-3eta':
-                        defTyp[-1].append(-3.0*mdr)
-                    elif s[i] == '-5eta':
-                        defTyp[-1].append(-5.0*mdr)
-                    elif s[i] == '-6eta':
-                        defTyp[-1].append(-6.0*mdr)
-                    elif s[i] == '-4eta':
-                        defTyp[-1].append(-4.0*mdr)
+                    defTyp[-1].append(s[i])
+#                    if s[i] == '0.0':
+#                        defTyp[-1].append(float(s[i]))
+#                    elif s[i] == 'eta':
+#                        defTyp[-1].append(mdr)
+#                    elif s[i] == '2eta':
+#                        defTyp[-1].append(2.0*mdr)
+#                    elif s[i] == '-eta':
+#                        defTyp[-1].append(-mdr)
+#                    elif s[i] == '.5eta':
+#                        defTyp[-1].append(0.5*mdr)
+#                    elif s[i] == '-2eta':
+#                        defTyp[-1].append(-2.0*mdr)
+#                    elif s[i] == '3eta':
+#                        defTyp[-1].append(3.0*mdr)
+#                    elif s[i] == '4eta':
+#                        defTyp[-1].append(4.0*mdr)
+#                    elif s[i] == '5eta':
+#                        defTyp[-1].append(5.0*mdr)
+#                    elif s[i] == '6eta':
+#                        defTyp[-1].append(6.0*mdr)
+#                    elif s[i] == '-3eta':
+#                        defTyp[-1].append(-3.0*mdr)
+#                    elif s[i] == '-5eta':
+#                        defTyp[-1].append(-5.0*mdr)
+#                    elif s[i] == '-6eta':
+#                        defTyp[-1].append(-6.0*mdr)
+#                    elif s[i] == '-4eta':
+#                        defTyp[-1].append(-4.0*mdr)
 
         f.close()
 #        print("defTyp=",defTyp)
@@ -209,6 +244,8 @@ class SampleContext(object):
 #        backend.closeSection("x_elastic_section_single_configuration_calculation", elasticGIndex)
         os.chdir('Energy-vs-Strain')
 
+#        ha_per_joule = convert_unit(1, "hartree", "J")
+#        print("ha_per_joule=",ha_per_joule)
         d2E6_val = []
         d2E4_val = []
         d2E2_val = []
@@ -237,7 +274,7 @@ class SampleContext(object):
                         d2E_eta_tot[-1].append([])
                     elif len(s) >= 30:
                         d2E_eta, d2E_values = s.split()
-                        d2E_val_tot[-1][-1].append(float(d2E_values))
+                        d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
                         d2E_eta_tot[-1][-1].append(float(d2E_eta))
                 f.close()
             else:
@@ -255,7 +292,7 @@ class SampleContext(object):
                         d2E_eta_tot[-1].append([])
                     elif len(s) >= 30:
                         d2E_eta, d2E_values = s.split()
-                        d2E_val_tot[-1][-1].append(float(d2E_values))
+                        d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
                         d2E_eta_tot[-1][-1].append(float(d2E_eta))
                 f.close()
             d2E6_val.append(d2E_val_tot[i-1][0])
@@ -359,29 +396,29 @@ class SampleContext(object):
                     except ValueError:
                         continue
                     else:
-                        EC_eigen.append(float(s[0]))
+                        EC_eigen.append(float(s[0])*giga)
                 elif "B_V" in s:
-                    B_V = float(s[5])
+                    B_V = float(s[5])*giga
                 elif "G_V" in s:
-                    G_V = float(s[5])
+                    G_V = float(s[5])*giga
                 elif "B_R" in s:
-                    B_R = float(s[5])
+                    B_R = float(s[5])*giga
                 elif "G_R" in s:
-                    G_R = float(s[5])
+                    G_R = float(s[5])*giga
                 elif "B_H" in s:
-                    B_H = float(s[5])
+                    B_H = float(s[5])*giga
                 elif "G_H" in s:
-                    G_H = float(s[5])
+                    G_H = float(s[5])*giga
                 elif "E_V" in s:
-                    E_V = float(s[5])
+                    E_V = float(s[5])*giga
                 elif "nu_V" in s:
                     nu_V = float(s[5])
                 elif "E_R" in s:
-                    E_R = float(s[5])
+                    E_R = float(s[5])*giga
                 elif "nu_R" in s:
                     nu_R = float(s[5])
                 elif "E_H" in s:
-                    E_H = float(s[5])
+                    E_H = float(s[5])*giga
                 elif "nu_H" in s:
                     nu_H = float(s[5])
                 elif len(s) == 6 and s[0] != "Elastic" and s[0] != "Eigenvalues":
@@ -399,8 +436,9 @@ class SampleContext(object):
 
             for i in range(0,6):
                 for j in range(0,6):
-                    ECMat[i][j] = float(ECMat[i][j])
-                    complMat[i][j] = float(complMat[i][j])
+                    voigtMat[i][j] = voigtMat[j][i]
+                    ECMat[i][j] = float(ECMat[j][i])*giga
+                    complMat[i][j] = float(complMat[j][i])/giga
 
 #            backend.addValue("x_elastic_deformation_types", defTyp)
 #            backend.addValue("x_elastic_number_of_deformations", defNum)
@@ -559,7 +597,7 @@ class SampleContext(object):
                         C444  = float(s[2])
 
 
-            if(149 <= SGN and SGN <= 167): # Rhombohedral I
+            if(149 <= self.SGN and self.SGN <= 167): # Rhombohedral I
                 LC = 'RI'
                 ECs= 14
 
@@ -686,7 +724,7 @@ class SampleContext(object):
                 ECmat[5][5][3] = C124
 
 
-            elif(168 <= SGN and SGN <= 176): # Hexagonal II
+            elif(168 <= self.SGN and self.SGN <= 176): # Hexagonal II
                 LC = 'HII'
                 ECs= 12
 
@@ -777,7 +815,7 @@ class SampleContext(object):
                 ECmat[5][5][2] = D
                 ECmat[5][5][5] = -C116
 
-            elif(177 <= SGN and SGN <= 194): # Hexagonal I
+            elif(177 <= self.SGN and self.SGN <= 194): # Hexagonal I
                 LC = 'HI'
                 ECs= 10
 
@@ -853,7 +891,7 @@ class SampleContext(object):
                 ECmat[5][5][1] = C
                 ECmat[5][5][2] = D
 
-            elif(195 <= SGN and SGN <= 206): # Cubic II
+            elif(195 <= self.SGN and self.SGN <= 206): # Cubic II
                 LC = 'CII'
                 ECs=  8
 
@@ -923,7 +961,7 @@ class SampleContext(object):
                 ECmat[5][5][1] = C155
                 ECmat[5][5][2] = C144
 
-            elif(207 <= SGN and SGN <= 230): # Cubic I
+            elif(207 <= self.SGN and self.SGN <= 230): # Cubic I
                 LC = 'CI'
                 ECs=  6
 
@@ -1027,11 +1065,16 @@ mainFileDescription = \
 #                  SM(r"\s*Order of elastic constants\s*=\s*(?P<x_elastic_elastic_constant_order>[0-9]+)"),
                   SM(r"\s*Method of calculation\s*=\s*(?P<x_elastic_calculation_method>[-a-zA-Z]+)"),
                   SM(r"\s*DFT code name\s*=\s*(?P<x_elastic_code>[-a-zA-Z]+)"),
-                  SM(r"\s*Space-group number\s*=\s*(?P<x_elastic_space_group_number>[0-9]+)"),
-                  SM(r"\s*Volume of equilibrium unit cell\s*=\s*(?P<x_elastic_unit_cell_volume>[-0-9.]+)\s*\[a.u\^3\]"),
+                  SM(name = 'system',
+                  startReStr = r"\s*Space-group number\s*=\s*(?P<x_elastic_space_group_number>[0-9]+)",
+                  sections = ['section_system'],
+                  subMatchers = [
+#                  SM(r"\s*Space-group number\s*=\s*(?P<x_elastic_space_group_number>[0-9]+)"),
+                  SM(r"\s*Volume of equilibrium unit cell\s*=\s*(?P<x_elastic_unit_cell_volume__bohr3>[-0-9.]+)\s*\[a.u\^3\]")
+                  ]),
                   SM(r"\s*Maximum Lagrangian strain\s*=\s*(?P<x_elastic_max_lagrangian_strain>[0-9.]+)"),
                   SM(r"\s*Number of distorted structures\s*=\s*(?P<x_elastic_number_of_distorted_structures>[0-9]+)")
-                ])
+               ] )
               ])
 
 
