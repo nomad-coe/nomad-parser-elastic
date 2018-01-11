@@ -42,6 +42,7 @@ object ElasticParser extends SimpleExternalParserGenerator(
   resList = Seq(
     "parser-elastic/parser_elastic.py",
     "parser-elastic/setup_paths.py",
+    "parser-elastic/elastic_parser_input.py",
     "nomad_meta_info/public.nomadmetainfo.json",
     "nomad_meta_info/common.nomadmetainfo.json",
     "nomad_meta_info/meta_types.nomadmetainfo.json",
