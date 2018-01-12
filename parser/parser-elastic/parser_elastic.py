@@ -63,8 +63,8 @@ class SampleContext(object):
 
     def onClose_section_method(self, backend, gIndex, section):
         ha_per_joule = convert_unit(1, "hartree", "J")
-#        giga = 10**9
-        giga = 1.0
+        giga = 10**9
+#        giga = 1.0
 #        SGN = int(section["x_elastic_space_group_number"][0])
 #        print("SGN=",SGN)
         elCode = section['x_elastic_code']
@@ -330,7 +330,7 @@ class SampleContext(object):
                         CrossVal_eta_tot[-1].append([])
                     elif len(s) >= 20 and s.split()[0] != '#':
                         CrossVal_eta, CrossVal_values = s.split()
-                        CrossVal_val_tot[-1][-1].append(float(CrossVal_values))
+                        CrossVal_val_tot[-1][-1].append(float(CrossVal_values)*ha_per_joule)
                         CrossVal_eta_tot[-1][-1].append(float(CrossVal_eta))
                 f.close()
             else:
@@ -345,8 +345,8 @@ class SampleContext(object):
                         CrossVal_eta_tot[-1].append([])
                     elif len(s) >= 20 and s.split()[0] != '#':
                         CrossVal_eta, CrossVal_values = s.split()
-                        CrossVal_val_tot[-1][-1].append(float(CrossVal_values))
-                        CrossVal_val_tot[-1][-1].append(float(CrossVal_values))
+                        CrossVal_val_tot[-1][-1].append(float(CrossVal_values)*ha_per_joule)
+                        CrossVal_eta_tot[-1][-1].append(float(CrossVal_eta))
                 f.close()
             CrossVal6_val.append(CrossVal_val_tot[i-1][0])
             CrossVal4_val.append(CrossVal_val_tot[i-1][1])
