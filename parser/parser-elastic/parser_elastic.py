@@ -31,9 +31,10 @@ class SampleContext(object):
         self.initialize_values()
 
     def onClose_section_run(self, backend, gIndex, section):        
-        pass
+        backend.addValue('program_name', 'elastic')
 
     def onClose_section_system(self, backend, gIndex, section):
+        backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
         dirPath = os.path.dirname(mainFile)
