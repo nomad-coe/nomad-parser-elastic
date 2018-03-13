@@ -1,3 +1,18 @@
+# Copyright 2016-2018 The NOMAD Developers Group
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Main author and maintainer: Lorenzo Pardini <loren.pard@gmail.com>
 import xml.sax
 import logging
 import numpy as np
@@ -26,14 +41,10 @@ class InputHandler(xml.sax.handler.ContentHandler):
         for i in range(0,len(self.cellDummy)):
             for j in range(0,3):
                 self.cell[i].append(float(self.cellDummy[i][j])*self.scale*bohr_to_m)
-#        print("cell=",self.cell)
         self.backend.addValue("lattice_vectors", self.cell)
         self.backend.addValue('atom_positions',self.atomCoor)
         for i in range(0,len(self.atomCoor)):
             self.speciesfile.append(self.speciesfileDummy)
- #       print("len(self.atomCoor)=",len(self.atomCoor))
- #       print("self.atomCoor=",self.atomCoor)
- #       print("self.speciesfile=",self.speciesfile)
         self.backend.addValue("atom_labels", self.speciesfile)
     def startElement(self, name, attrs):
         self.CurrentData = name
@@ -41,14 +52,11 @@ class InputHandler(xml.sax.handler.ContentHandler):
             self.scale = float(attrs.getValue('scale'))
         elif name == 'species':
             self.speciesfileDummy = attrs.getValue('speciesfile')[:-4]
-#            self.backend.addValue("atom_labels", self.speciesfile[:-4])
-#            print("self.speciesfile=",self.speciesfile)
         elif name == 'atom':
             self.atomCoorDummy = attrs.getValue('coord').split()
             for j in range(0,3):
                self.atomCoorDummy[j]=float(self.atomCoorDummy[j])
             self.atomCoor.append(self.atomCoorDummy)
-#            print("self.atomCoor=",self.atomCoor) 
         else:
             pass
 
@@ -56,35 +64,14 @@ class InputHandler(xml.sax.handler.ContentHandler):
         pass
 
     def characters(self, content):
-#        cell = []
         if self.CurrentData == 'basevect':
             self.latticeDummy = content
             lattice = self.latticeDummy.split()
             if lattice != []:
                 self.cellDummy.append(lattice)
                 self.cell.append([])
-#            if lattice[i] != []:
-#                cell.append(lattice)
-#                for i in range(0,2):                   
-#                print("lattice=",cell)
         else:
             pass
-#        print("cell=",cell)
-#        for i in range(0,len(lattice)):
-#            if lattice[i] != []:
-#                cell.append(lattice)
-#                for i in range(0,2):                   
-#                print("lattice=",cell)
-#        else:
-#            pass
-
-#        for i in range(0,len(lattice)):
-#            if lattice[i] != []:
-#                cell.append(lattice)
-#            print("lattice=",cell)
-#                for i in range(0,2):
-#    def endElement(self, name):
-#        pass
 
 def parseInput(inF, backend):
     handler = InputHandler(backend)

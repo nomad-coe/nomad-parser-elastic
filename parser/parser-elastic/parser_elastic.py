@@ -1,3 +1,18 @@
+# Copyright 2016-2018 The NOMAD Developers Group
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Main author and maintainer: Lorenzo Pardini <loren.pard@gmail.com>
 from builtins import object
 import setup_paths
 import numpy as np
@@ -19,16 +34,24 @@ class SampleContext(object):
         self.etaEC = []
         self.fitEC = []
         self.SGN = 0
+        self.secMethodIndex = None
+        self.secSystemIndex = None
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse different files"""
         pass
 
+    def onOpen_section_system(self, backend, gIndex, section):
+        self.secSystemIndex = gIndex
+
     def startedParsing(self, path, parser):
         """called when parsing starts"""
         self.parser = parser
-        # allows to reset values if the same superContext is used to parse different files
         self.initialize_values()
+
+    def onOpen_section_method(self, backend, gIndex, section):
+        if self.secMethodIndex is None:
+            self.secMethodIndex = gIndex
 
     def onClose_section_run(self, backend, gIndex, section):        
         backend.addValue('program_name', 'elastic')
@@ -37,7 +60,7 @@ class SampleContext(object):
         backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
-        dirPath = os.path.dirname(mainFile)
+        dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first
         self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     YES
         self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           YES
 #        print("self.mainFileUri=",self.mainFileUri)
@@ -47,11 +70,8 @@ class SampleContext(object):
         for files in os.listdir(dirPath):
             if files[-3:] == "xml":
                 inputFile = files
-#                print("os.path.cwd()=",os.getcwd())
-#                print("inputFile=",inputFile)
             else:
                 pass
-#        print("dirPath=",dirPath)
         os.chdir(self.mainFilePath)
 #        os.chdir(dirPath)
         with open(inputFile) as f:
@@ -65,15 +85,11 @@ class SampleContext(object):
     def onClose_section_method(self, backend, gIndex, section):
         ha_per_joule = convert_unit(1, "hartree", "J")
         giga = 10**9
-#        giga = 1.0
-#        SGN = int(section["x_elastic_space_group_number"][0])
-#        print("SGN=",SGN)
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
 #        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     NO
 #        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           NO
         self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######      NO
-#        print("2222222=",self.mainFilePath)
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
@@ -115,29 +131,19 @@ class SampleContext(object):
                 if (j<10):
                     if (i<10):
                         if elCode[0] == 'exciting':
-                            ext_uri.append(self.mainFilePath + '/Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/INFO.OUT')
-#                            print("cur_dir=", ext_uri)
+                            ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/INFO.OUT')
                         elif elCode[0] == 'WIEN2K':
                             pass
                         elif elCode[0] == 'ESPRESSO':
                             pass
 #####################above: to be repeated below for the wien2k and QE################
                     else:
-                        ext_uri.append(self.mainFilePath + '/Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/INFO.OUT')
-#                        print("cur_dir=", cur_dir)
+                        ext_uri.append(self.mainFilePath + 'Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/INFO.OUT')
                 else:
                     if (i<10):
-                        ext_uri.append(self.mainFilePath + '/Dst' + str(j) + '/Dst' + str(j)  + '_0' + str(i) + '/INFO.OUT')
-#                        print("cur_dir=", cur_dir)
+                        ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_0' + str(i) + '/INFO.OUT')
                     else:
-                        ext_uri.append(self.mainFilePath + '/Dst' + str(j) + '/Dst' + str(j)  + '_' + str(i) + '/INFO.OUT')
-#                        print("cur_dir=", cur_dir)
-#        print("ext_uri=", ext_uri)
-#        for ref in ext_uri:
-#            print("ref=", ref)
-#        singlGindex = backend.openSection("section_single_configuration_calculation")
-#        refGindex = backend.openSection("section_calculation_to_calculation_refs")
-       #    if dftSingleConfigurationGindex is not None:
+                        ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_' + str(i) + '/INFO.OUT')
         for ref in ext_uri:
             refGindex = backend.openSection("section_calculation_to_calculation_refs")
             backend.addValue("calculation_to_calculation_external_url", ref)
@@ -153,19 +159,15 @@ class SampleContext(object):
         energy = []
         eta = []
 
-#        print("Ecs= ",ECs)
         for j in range(1, ECs+1):
-#            print("j= ",j)
             if (j<10):
                 Dstn = 'Dst0'+ str(j)
                 eta.append([])
                 energy.append([])
-#                print("Dstn= ",Dstn)
             else:
                 Dstn = 'Dst' + str(j)
                 eta.append([])
                 energy.append([])
-#                print("Dstn= ", Dstn)
 
 ###############ADDED BELOW###################
 #
@@ -194,50 +196,16 @@ class SampleContext(object):
             s = f.readline()
             if not s: break
             s = s.strip()
-#            print("s=",s)
             if 'Lagrangian' in s:
                 defTyp.append([])
                 s = s.split("(")
                 s = s[-1].split(")")
                 s = s[0].split(",")
-#                print("esse=",s)
                 for i in range(0,6):
                     s[i] = s[i].strip()
-#                    print("s[i]=",s[i])
                     defTyp[-1].append(s[i])
-#                    if s[i] == '0.0':
-#                        defTyp[-1].append(float(s[i]))
-#                    elif s[i] == 'eta':
-#                        defTyp[-1].append(mdr)
-#                    elif s[i] == '2eta':
-#                        defTyp[-1].append(2.0*mdr)
-#                    elif s[i] == '-eta':
-#                        defTyp[-1].append(-mdr)
-#                    elif s[i] == '.5eta':
-#                        defTyp[-1].append(0.5*mdr)
-#                    elif s[i] == '-2eta':
-#                        defTyp[-1].append(-2.0*mdr)
-#                    elif s[i] == '3eta':
-#                        defTyp[-1].append(3.0*mdr)
-#                    elif s[i] == '4eta':
-#                        defTyp[-1].append(4.0*mdr)
-#                    elif s[i] == '5eta':
-#                        defTyp[-1].append(5.0*mdr)
-#                    elif s[i] == '6eta':
-#                        defTyp[-1].append(6.0*mdr)
-#                    elif s[i] == '-3eta':
-#                        defTyp[-1].append(-3.0*mdr)
-#                    elif s[i] == '-5eta':
-#                        defTyp[-1].append(-5.0*mdr)
-#                    elif s[i] == '-6eta':
-#                        defTyp[-1].append(-6.0*mdr)
-#                    elif s[i] == '-4eta':
-#                        defTyp[-1].append(-4.0*mdr)
 
         f.close()
-#        print("defTyp=",defTyp)
-#        print('eta=',eta)
-#        print('energy=',energy)
 #        backend.addValue("x_elastic_deformation_types", defTyp)
 #        backend.addValue("x_elastic_number_of_deformations", defNum)
 #        backend.addValue("x_elastic_energy_strain_eta_values", eta)
@@ -245,8 +213,6 @@ class SampleContext(object):
 #        backend.closeSection("x_elastic_section_single_configuration_calculation", elasticGIndex)
         os.chdir('Energy-vs-Strain')
 
-#        ha_per_joule = convert_unit(1, "hartree", "J")
-#        print("ha_per_joule=",ha_per_joule)
         d2E6_val = []
         d2E4_val = []
         d2E2_val = []
@@ -269,7 +235,6 @@ class SampleContext(object):
                     s = f.readline()
                     if not s: break
                     s = s.strip()
-#                    print("esse=",s)
                     if "order" in s.split():
                         d2E_val_tot[-1].append([])
                         d2E_eta_tot[-1].append([])
@@ -302,10 +267,6 @@ class SampleContext(object):
             d2E6_eta.append(d2E_eta_tot[i-1][0])
             d2E4_eta.append(d2E_eta_tot[i-1][1])
             d2E2_eta.append(d2E_eta_tot[i-1][2])
-#        print("d2E6_val=",d2E6_val)
-#        print("d2E2_val=",d2E2_val)
-#        print("d2E6_eta=",d2E6_eta)
-#        print("d2E2_eta=",d2E2_eta)
         CrossVal6_val = []
         CrossVal4_val = []
         CrossVal2_val = []
@@ -363,8 +324,6 @@ class SampleContext(object):
         elif ordr == 3:
             f = open ('ElaStic_'+str(ordr)+'rd.in','r')
 
-#        self.etaEC = []
-#        self.fitEC = []
         EC_eigen = []
 
         for i in range(1, ECs+1):
@@ -378,8 +337,6 @@ class SampleContext(object):
 
         if ordr == 2:
             f = open ('ElaStic_'+str(ordr)+'nd.out','r')
-#        elif ordr == 3:
-#            f = open ('ElaStic_'+str(ordr)+'rd.out','r')
 
             allMat = [[],[],[],[],[],[]]
             voigtMat = [[],[],[],[],[],[]]
@@ -392,7 +349,6 @@ class SampleContext(object):
                 s = s.strip()
                 s = s.split()
                 if len(s) == 1:
-#                print("esse=",s)
                     try: float(s[0])
                     except ValueError:
                         continue
@@ -498,24 +454,6 @@ class SampleContext(object):
             backend.addValue("x_elastic_strain_diagram_values", d2E6_val)
             backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_2nd',polFit2)
-#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_4th',polFit4)
-#            backend.addValue('x_elastic_d2E_number_of_eta_polinomial_6th',polFit6)
-#            backend.addValue('x_elastic_d2E_d2E_values_2nd',d2E2_val)
-#            backend.addValue('x_elastic_d2E_d2E_values_4th',d2E4_val)
-#            backend.addValue('x_elastic_d2E_d2E_values_6th',d2E6_val)
-#            backend.addValue('x_elastic_d2E_eta_values_2nd',d2E2_eta)
-#            backend.addValue('x_elastic_d2E_eta_values_4th',d2E4_eta)
-#            backend.addValue('x_elastic_d2E_eta_values_6th',d2E6_eta)
-#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_2nd',polFit2Cross)
-#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_4th',polFit4Cross)
-#            backend.addValue('x_elastic_cross_number_of_eta_polinomial_6th',polFit6Cross)
-#            backend.addValue('x_elastic_cross_cross_values_2nd',CrossVal2_val)
-#            backend.addValue('x_elastic_cross_cross_values_4th',CrossVal4_val)
-#            backend.addValue('x_elastic_cross_cross_values_6th',CrossVal6_val)
-#            backend.addValue('x_elastic_cross_eta_values_2nd',CrossVal2_eta)
-#            backend.addValue('x_elastic_cross_eta_values_4th',CrossVal4_eta)
-#            backend.addValue('x_elastic_cross_eta_values_6th',CrossVal6_eta)
             backend.addValue('x_elastic_2nd_order_constants_notation_matrix',voigtMat)
             backend.addValue('x_elastic_2nd_order_constants_matrix',ECMat)
             backend.addValue('x_elastic_2nd_order_constants_compliance_matrix',complMat)
@@ -551,14 +489,12 @@ class SampleContext(object):
                     for k in range(0,6):
                         ECmat[i][j].append([])
                         ECmat[i][j][k] = int(0)
-#            print("ECmat= ",ECmat)
 
             while 1:
                 s = f.readline()
                 if not s: break
                 s = s.strip()
                 s = s.split()
-#                print("essesse=",s[0])
                 if len(s) == 4:
                     if s[0] == 'C111':
                         C111 = float(s[2])
@@ -1032,7 +968,6 @@ class SampleContext(object):
                 ECmat[5][5][1] = C155
                 ECmat[5][5][2] = C144
 
-#            print("ECmat= ",ECmat)
             elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
             backend.addValue("x_elastic_strain_diagram_type", "energy")
             backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta))
@@ -1047,6 +982,11 @@ class SampleContext(object):
             backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
             backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
             backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
+
+    def onClose_section_single_configuration_calculation(self, backend, gIndex, section):
+#    logging.error("BASE onClose_section_single_configuration_calculation")
+        backend.addValue('single_configuration_to_calculation_method_ref', self.secMethodIndex)
+        backend.addValue('single_configuration_calculation_to_system_ref', self.secSystemIndex)
 
 mainFileDescription = \
            SM(name = 'root',
