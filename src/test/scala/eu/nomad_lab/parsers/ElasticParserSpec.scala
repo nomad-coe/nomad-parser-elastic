@@ -29,14 +29,4 @@ object ElasticParserSpec extends Specification {
 
   }
 
-  "ElasticParser3rdTest" >> {
-    "test with json-events" >> {
-      ParserRun.parse(ElasticParser, "parsers/elastic/test/examples/3rd/INFO_ElaStic", "json-events") must_== ParseResult.ParseSuccess
-    }
-    "test with json" >> {
-      ParserRun.parse(ElasticParser, "parsers/elastic/test/examples/3rd/INFO_ElaStic", "json") must_== ParseResult.ParseSuccess
-    }
-
-  }
-
 }
