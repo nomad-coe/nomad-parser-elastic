@@ -22,7 +22,7 @@ from nomadcore.simple_parser import mainFunction
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 import os, sys, json, elastic_parser_input_exciting, elastic_parser_input_wien2k
-from pathlib import Path
+#from pathlib import Path
 
 class SampleContext(object):
 
@@ -324,9 +324,10 @@ class SampleContext(object):
 #        backend.addValue("x_elastic_energy_strain_energy_values", energy)
 #        backend.closeSection("x_elastic_section_single_configuration_calculation", elasticGIndex)
 
-        my_file = Path("Energy-vs-Strain")
+#        my_file = Path("Energy-vs-Strain")
 #        print("ooooo",my_file.exists())
-        if my_file.is_dir():
+        if 'Energy-vs-Strain' in os.listdir():
+#        if my_file.is_dir():
 #            print("esiste! :-)")
 #        else:
 #            print("non esiste :-(")
