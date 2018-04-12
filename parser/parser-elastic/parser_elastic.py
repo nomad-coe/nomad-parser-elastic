@@ -327,7 +327,7 @@ class SampleContext(object):
 #        my_file = Path("Energy-vs-Strain")
 #        print("ooooo",my_file.exists())
 #        print("oooooooo ", os.listdir())
-        prova = os.listdir()
+        prova = os.listdir('.')
 #        print("prova= ",prova)
         if 'Energy-vs-Strain' in prova:
 #        if my_file.is_dir():
