@@ -62,11 +62,11 @@ class SampleContext(object):
         backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
-#        dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first    OKOKOKKO
+        dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first    OKOKOKKO
         self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     YES
         self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           YES
 #        print("self.mainFileUri=",self.mainFileUri)
-        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
+#        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
 #        print("dirPath=",dirPath)
 #        for files in os.listdir(self.mainFilePath):
         for files in os.listdir(dirPath):
