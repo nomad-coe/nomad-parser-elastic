@@ -32,7 +32,7 @@ class InputHandler(xml.sax.handler.ContentHandler):
         self.atomCoorDummy = []
         self.speciesfileDummy = ''
         self.speciesfile = []
-        self.scale = 1
+        self.scale = 1.0
         self.cell = []
         self.cellDummy = []
 
@@ -49,7 +49,10 @@ class InputHandler(xml.sax.handler.ContentHandler):
     def startElement(self, name, attrs):
         self.CurrentData = name
         if name == "crystal":
-            self.scale = float(attrs.getValue('scale'))
+            try:
+                self.scale = float(attrs.getValue('scale'))
+            except:
+                self.scale = 1.0
         elif name == 'species':
             self.speciesfileDummy = attrs.getValue('speciesfile')[:-4]
         elif name == 'atom':
