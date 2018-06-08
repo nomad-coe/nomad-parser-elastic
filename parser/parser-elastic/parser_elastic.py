@@ -239,17 +239,44 @@ class SampleContext(object):
 #            print("elCode[0]=",elCode[0])
             if elCode[0] == 'exciting':
 #                print("ooooooooooexciting")
-                f = open(Dstn+'-Energy.dat', 'r')
-                while 1:
-                   s = f.readline()
-                   if not s: break
-                   s = s.strip()
-                   dummy_eta, dummy_energy = s.split()
+                try:
+                   f = open(Dstn+'-Energy.dat', 'r')
+                   while 1:
+                      s = f.readline()
+                      if not s: break
+                      s = s.strip()
+                      dummy_eta, dummy_energy = s.split()
 #                   print("dummy_eta=",dummy_eta)
 #                   print("dummy_energy=",dummy_energy)
-                   eta[-1].append(float(dummy_eta))
-                   energy[-1].append(float(dummy_energy)*ha_per_joule)
-                os.chdir('../')
+                      eta[-1].append(float(dummy_eta))
+                      energy[-1].append(float(dummy_energy)*ha_per_joule)
+                   os.chdir('../')
+                except:
+                   pass
+                try:
+                   f = open(Dstn+'_Energy.dat', 'r')
+                   while 1:
+                      s = f.readline()
+                      if not s: break
+                      s = s.strip()
+                      dummy_eta, dummy_energy = s.split()
+#                   print("dummy_eta=",dummy_eta)
+#                   print("dummy_energy=",dummy_energy)
+                      eta[-1].append(float(dummy_eta))
+                      energy[-1].append(float(dummy_energy)*ha_per_joule)
+                   os.chdir('../')
+                except:
+                   pass
+#                while 1:
+#                   s = f.readline()
+#                   if not s: break
+#                   s = s.strip()
+#                   dummy_eta, dummy_energy = s.split()
+##                   print("dummy_eta=",dummy_eta)
+##                   print("dummy_energy=",dummy_energy)
+#                   eta[-1].append(float(dummy_eta))
+#                   energy[-1].append(float(dummy_energy)*ha_per_joule)
+#                os.chdir('../')
 
             elif elCode[0] == 'WIEN': 
 #                print("oooooooooooowien2k")
@@ -349,22 +376,43 @@ class SampleContext(object):
                 d2E_eta_tot.append([])
                 if (i<10):
                     if ordr == 2:
-                        Dstn = 'Dst0'+ str(i) + '_d2E.dat'
+                        Dstna = 'Dst0'+ str(i) + '_d2E.dat'
+                        Dstnb = 'Dst0'+ str(i) + '_ddE.dat'
                     elif ordr == 3:
-                        Dstn = 'Dst0'+ str(i) + '_d3E.dat'
-                    f = open (Dstn,'r')
-                    while 1:
-                        s = f.readline()
-                        if not s: break
-                        s = s.strip()
-                        if "order" in s.split():
-                            d2E_val_tot[-1].append([])
-                            d2E_eta_tot[-1].append([])
-                        elif len(s) >= 30:
-                            d2E_eta, d2E_values = s.split()
-                            d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                            d2E_eta_tot[-1][-1].append(float(d2E_eta))
-                    f.close()
+                        Dstna = 'Dst0'+ str(i) + '_d3E.dat'
+#                        Dstnb = 'Dst0'+ str(i) + '-d3E.dat'
+                    try:
+                       f = open (Dstna,'r')
+                       while 1:
+                           s = f.readline()
+                           if not s: break
+                           s = s.strip()
+                           if "order" in s.split():
+                               d2E_val_tot[-1].append([])
+                               d2E_eta_tot[-1].append([])
+                           elif len(s) >= 30:
+                               d2E_eta, d2E_values = s.split()
+                               d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
+                               d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                       f.close()
+                    except:
+                       pass
+                    try:
+                       f = open (Dstnb,'r')
+                       while 1:
+                           s = f.readline()
+                           if not s: break
+                           s = s.strip()
+                           if "order" in s.split():
+                               d2E_val_tot[-1].append([])
+                               d2E_eta_tot[-1].append([])
+                           elif len(s) >= 30:
+                               d2E_eta, d2E_values = s.split()
+                               d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
+                               d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                       f.close()
+                    except:
+                       pass
                 else:
                     if ordr == 2:
                         Dstn = 'Dst' + str(i) + '_d2E.dat'
@@ -480,13 +528,19 @@ class SampleContext(object):
                         EC_eigen.append(float(s[0])*giga)
                 elif "B_V" in s:
                     B_V = float(s[5])*giga
+                elif "K_V" in s:
+                    B_V = float(s[5])*giga
                 elif "G_V" in s:
                     G_V = float(s[5])*giga
                 elif "B_R" in s:
                     B_R = float(s[5])*giga
+                elif "K_R" in s:
+                    B_R = float(s[5])*giga
                 elif "G_R" in s:
                     G_R = float(s[5])*giga
                 elif "B_H" in s:
+                    B_H = float(s[5])*giga
+                elif "K_H" in s:
                     B_H = float(s[5])*giga
                 elif "G_H" in s:
                     G_H = float(s[5])*giga
