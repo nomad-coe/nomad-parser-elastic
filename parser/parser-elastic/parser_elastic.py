@@ -58,69 +58,54 @@ class SampleContext(object):
         backend.addValue('program_version', '1.0')
 
     def onClose_section_system(self, backend, gIndex, section):
+#        print("quiiiii")
         backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
         dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first    OKOKOKKO
-        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     YES
-        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           YES
+        self.mainFile = self.parser.fIn.name             
+        self.mainFilePath = self.mainFile[0:-12]   
 #        print("self.mainFileUri=",self.mainFileUri)
 #        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
-#        print("dirPath=",dirPath)
+#        print("os.listdir(dirPath)=",os.listdir(dirPath))
 #        for files in os.listdir(self.mainFilePath):
         for files in os.listdir(dirPath):
             if files[-3:] == "xml":
                 inputFile = files
+#                print("Exself.mainFilePath=",self.mainFilePath)
+#                print("inputFile=",inputFile)
                 os.chdir(self.mainFilePath)
                 with open(inputFile) as f:
                     elastic_parser_input_exciting.parseInput(f, backend)
             elif files[-6:] == "struct":
                 inputFile = files
+#                print("Wiself.mainFilePath=",self.mainFilePath)
+#                print("inputFile=",inputFile)
                 os.chdir(self.mainFilePath)
-#                structSuperContext = elastic_parser_input_wien2k.Wien2kStructContext()
-#                structParser = AncillaryParser(
-#                    fileDescription = elastic_parser_input_wien2k.buildStructureMatchers(),
-#                    parser = self.parser,
-#                    cachingLevelForMetaName = elastic_parser_input_wien2k.get_cachingLevelForMetaName(self.metaInfoEnv, CachingLevel.PreOpenedIgnore),
-#                    superContext = structSuperContext)
                 with open(inputFile) as g:
                     while 1:
                         s = g.readline()
                         if not s: break
                         s = s.strip()
-#                        print("s===",s)
-#                    structParser.parseFile(fIn)
-#                    elastic_parser_input_wien2k.parseInput(f, backend)
-#
-#        if os.path.exists(fName):
-#            structSuperContext = wien2k_parser_struct.Wien2kStructContext()
-#            structParser = AncillaryParser(
-#                fileDescription = wien2k_parser_struct.buildStructureMatchers(),
-#                parser = self.parser,
-#                cachingLevelForMetaName = wien2k_parser_struct.get_cachingLevelForMetaName(self.metaInfoEnv, CachingLevel.PreOpenedIgnore),
-#                superContext = structSuperContext)
-#
-#            with open(fName) as fIn:
-#                structParser.parseFile(fIn)
-#####come era prima di wien                pass
-#####come era prima di wien        os.chdir(self.mainFilePath)
-#        os.chdir(dirPath)
-#####come era prima di wien        with open(inputFile) as f:
-#####come era prima di wien            elastic_parser_input.parseInput(f, backend)
-#        print(os.listdir(dirPath))
-#        if os.path.exist([-3:]) == "xml":
-#            inputFile = os.path.exist()
-#        inputFile = os.path.join(dirPath, "input.xml")
-#        print("inputFile=",inputFile)
+            elif files[-3:] == ".in":
+                if files != "ElaStic_2nd.in":
+                    inputFile = files
+#                    print("Esself.mainFilePath=",self.mainFilePath)
+#                    print("inputFile=",inputFile)
+                    os.chdir(self.mainFilePath)
+                    with open(inputFile) as g:
+                        while 1:
+                            s = g.readline()
+                            if not s: break
+                            s = s.strip()
 
     def onClose_section_method(self, backend, gIndex, section):
+#        print("quoooo")
         ha_per_joule = convert_unit(1, "hartree", "J")
         giga = 10**9
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
-#        self.mainFile = self.parser.fIn.name              #####exciting sbt -> zip file####     NO
-#        self.mainFilePath = self.mainFile[0:-12]    #####exciting sbt -> zip file####           NO
-        self.mainFilePath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######      NO
+        self.mainFilePath = self.mainFileUri[0:-12]  
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
@@ -166,34 +151,36 @@ class SampleContext(object):
                         elif elCode[0] == 'WIEN':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/Dst0'+ str(j) + '_0' + str(i) + '_Converged.scf')
 #                            pass
-                        elif elCode[0] == 'ESPRESSO':
-                            pass
+                        elif elCode[0] == 'QUANTUM':
+                            ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/Dst0'+ str(j) + '_0' + str(i) + '.out')
 #####################above: to be repeated below for the wien2k and QE################
                     else:
                         if elCode[0] == 'exciting':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/INFO.OUT')
                         elif elCode[0] == 'WIEN':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/Dst0' + str(j) + '_' + str(i) + '_Converged.scf')
+                        elif elCode[0] == 'QUANTUM':
+                            ext_uri.append(self.mainFilePath + 'Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/Dst0' + str(j) + '_' + str(i) + '.out')
                 else:
                     if (i<10):
                         if elCode[0] == 'exciting':
                             ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_0' + str(i) + '/INFO.OUT')
                         elif elCode[0] == 'WIEN':
                             ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_0' + str(i) + '/Dst' + str(j)  + '_0' + str(i) + '_Converged.scf')
+                        elif elCode[0] == 'QUANTUM':
+                            ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_0' + str(i) + '/Dst' + str(j)  + '_0' + str(i) + '.out')
                     else:
                         if elCode[0] == 'exciting':
                             ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_' + str(i) + '/INFO.OUT')
                         elif elCode[0] == 'WIEN':
                             ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_' + str(i) +'/Dst' + str(j)  + '_' + str(i) + '_Converged.scf')
+                        elif elCode[0] == 'QUANTUM':
+                            ext_uri.append(self.mainFilePath + 'Dst' + str(j) + '/Dst' + str(j)  + '_' + str(i) +'/Dst' + str(j)  + '_' + str(i) + '.out')
         for ref in ext_uri:
             refGindex = backend.openSection("section_calculation_to_calculation_refs")
             backend.addValue("calculation_to_calculation_external_url", ref)
             backend.addValue("calculation_to_calculation_kind", "source_calculation")
             backend.closeSection("section_calculation_to_calculation_refs", refGindex)
-
-#        backend.closeSection("section_run")
-#        backend.closeSection("section_calculation_to_calculation_refs", refGindex)
-#        backend.closeSection("section_single_configuration_calculation", singlGindex)
 
 ##############ADDED ABOVE####################
 
@@ -221,21 +208,6 @@ class SampleContext(object):
 
             cur_dir = os.getcwd() 
 #            print("cur_dir=", cur_dir)
-
-#            my_file_exc = '/' + Dstn+'-Energy.dat'
-#            my_file_wien = '/' +Dstn+'_Energy.dat'
-#            my_file_exciting = Path('my_file_exc')
-#            my_file_wien2k = Path('my_file_wien')
-
-#            print("my_file_exc=",my_file_exc)
-#            print("my_file_wien=",my_file_wien)
-#            print("my_file_exciting=",my_file_exciting)
-#            print("my_file_wien2k=",my_file_wien2k)
-#            cur_dir = os.getcwd()
-#            print("cur_dir=", cur_dir)
-#            print(my_file_exciting.exists())
-#            print(my_file_wien2k.exists())
-
 #            print("elCode[0]=",elCode[0])
             if elCode[0] == 'exciting':
 #                print("ooooooooooexciting")
@@ -267,18 +239,22 @@ class SampleContext(object):
                    os.chdir('../')
                 except:
                    pass
-#                while 1:
-#                   s = f.readline()
-#                   if not s: break
-#                   s = s.strip()
-#                   dummy_eta, dummy_energy = s.split()
-##                   print("dummy_eta=",dummy_eta)
-##                   print("dummy_energy=",dummy_energy)
-#                   eta[-1].append(float(dummy_eta))
-#                   energy[-1].append(float(dummy_energy)*ha_per_joule)
-#                os.chdir('../')
 
             elif elCode[0] == 'WIEN': 
+#                print("oooooooooooowien2k")
+                f = open(Dstn+'_Energy.dat', 'r')
+                while 1:
+                   s = f.readline()
+                   if not s: break
+                   s = s.strip()
+                   dummy_eta, dummy_energy = s.split()
+#                   print("dummy_eta=",dummy_eta)
+#                   print("dummy_energy=",dummy_energy)
+                   eta[-1].append(float(dummy_eta))
+                   energy[-1].append(float(dummy_energy)*ha_per_joule)
+                os.chdir('../')
+
+            elif elCode[0] == 'QUANTUM':
 #                print("oooooooooooowien2k")
                 f = open(Dstn+'_Energy.dat', 'r')
                 while 1:
@@ -295,37 +271,6 @@ class SampleContext(object):
             else:
                 os.chdir('../')
 
-#            try:              # WIEN2k
-#                f = open(Dstn+'_Energy.dat', 'r')
-#                while 1:
-#                   s = f.readline()
-#                   if not s: break
-#                   s = s.strip()
-#                   dummy_eta, dummy_energy = s.split()
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
-#                   eta[-1].append(float(dummy_eta))
-#                   energy[-1].append(float(dummy_energy)*ha_per_joule)
-#                os.chdir('../')
-#            except FileNotFoundError:
-#                os.chdir('../')
-
- #           try:              # exciting
- #               f = open(Dstn+'-Energy.dat', 'r')
- #               while 1:
- #                  s = f.readline()
- #                  if not s: break
-#                   s = s.strip()
-#                   dummy_eta, dummy_energy = s.split()
- #                  print("dummy_eta=",dummy_eta)
- #                  print("dummy_energy=",dummy_energy)
- #                  eta[-1].append(float(dummy_eta))
- #                  energy[-1].append(float(dummy_energy)*ha_per_joule)
- #               os.chdir('../')
- #           except FileNotFoundError:
- #               os.chdir('../')
-#            os.chdir('../')
-#            print("and now?",os.getcwd()) 
         defTyp = []
 
         f = open('Distorted_Parameters','r')
@@ -344,15 +289,6 @@ class SampleContext(object):
                     defTyp[-1].append(s[i])
 
         f.close()
-#        backend.addValue("x_elastic_deformation_types", defTyp)
-#        backend.addValue("x_elastic_number_of_deformations", defNum)
-#        backend.addValue("x_elastic_energy_strain_eta_values", eta)
-#        backend.addValue("x_elastic_energy_strain_energy_values", energy)
-#        backend.closeSection("x_elastic_section_single_configuration_calculation", elasticGIndex)
-
-#        my_file = Path("Energy-vs-Strain")
-#        print("ooooo",my_file.exists())
-#        print("oooooooo ", os.listdir())
         prova = os.listdir('.')
 #        print("prova= ",prova)
         if 'Energy-vs-Strain' in prova:
