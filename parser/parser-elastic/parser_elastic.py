@@ -20,13 +20,23 @@ from nomadcore.parser_backend import JsonParseEventsWriterBackend
 from nomadcore.simple_parser import mainFunction
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
+from nomadcore.unit_conversion import unit_conversion
 import os, sys, json, elastic_parser_input_exciting, elastic_parser_input_wien2k
+from ase import Atoms
 #from pathlib import Path
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 class SampleContext(object):
 
     def __init__(self): 
 #        self.mainFileUri = sys.argv[1]  #exciting !!!!!!LOCAL HOME!!!!!!!!             OKOKOKOK
+#        print("self.mainFileUri===init==",self.mainFileUri)
         self.mainFileUri = sys.argv[2]  #exciting !!! FOR NOMAD URI nmd:// or sbt -> zip file!!!!!!!!   OKOKKOOK
         self.parser = None
         self.mainFilePath = None
@@ -36,6 +46,7 @@ class SampleContext(object):
         self.SGN = 0
         self.secMethodIndex = None
         self.secSystemIndex = None
+        self.sim_cell = []
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse different files"""
@@ -67,6 +78,7 @@ class SampleContext(object):
         self.mainFilePath = self.mainFile[0:-12]   
 #        print("self.mainFileUri=",self.mainFileUri)
 #        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
+#        print("dirPath===",dirPath)
 #        print("os.listdir(dirPath)=",os.listdir(dirPath))
 #        for files in os.listdir(self.mainFilePath):
         for files in os.listdir(dirPath):
@@ -87,17 +99,86 @@ class SampleContext(object):
                         s = g.readline()
                         if not s: break
                         s = s.strip()
-            elif files[-3:] == ".in":
+            elif files[-3:] == ".in":         ##### so far it works only for Rostam's calculations
                 if files != "ElaStic_2nd.in":
                     inputFile = files
-#                    print("Esself.mainFilePath=",self.mainFilePath)
+                    atom_labels = []
+                    posX = []
+                    posY = []
+                    posZ = []
+                    coord = []
+                    lattice = []
+                    check = False
+#                    alat = 1
 #                    print("inputFile=",inputFile)
                     os.chdir(self.mainFilePath)
                     with open(inputFile) as g:
+                        fromB = unit_conversion.convert_unit_function("bohr", "m")
                         while 1:
                             s = g.readline()
                             if not s: break
                             s = s.strip()
+                            s = s.split()
+#                            print("s===",s)
+#                            print("s[0]===",s[0])
+#                            print("len(s)===",len(s))
+                            if s[0] == "ibrav":         ####### Rostam's: ibrav always 0
+#                                print("s[0]===",s[0])
+                                ibrav = s[2]
+                            elif s[0] == "celldm(1)":
+                                alat = float(s[2])
+                            elif len(s) == 4:
+                                atom_labels.append(s[0])
+                                posX.append(float(s[1]))
+                                posY.append(float(s[2]))
+                                posZ.append(float(s[3]))
+                            elif len(s) == 3 and s[1] != "=": 
+                                if is_number(s[0]):
+                                    lattice.append([fromB(alat*float(s[0])),fromB(alat*float(s[1])),fromB(alat*float(s[2]))])
+                                else:
+                                    pass
+#                                try: 
+#                                    float(s[0])                   
+#                                    return check = True
+#                                except:
+#                                    check = False
+#                                print("check===",check)
+#                                for i in range(3):
+#                                try:
+#                                    lattice.append(float(s[0]),float(s[1]),float(s[2]))
+#                                    print("qui????")
+#                                except:
+#                                    print("quo???")
+                    #                pass    
+#                        print("lattice===",lattice)
+                        for i in range(len(atom_labels)):
+                            coord.append([posX[i],posY[i],posZ[i]])
+#                            for j in range(3):
+#                            coord[i][0] = posX[i]
+#                            coord[i][1] = posY[i]
+#                            coord[i][2] = posZ[i]
+#                        print("alat===",alat)
+#                        print("atoms===",atoms)
+#                        print("posX===",posX)
+#                        print("posY===",posY)
+#                        print("posZ===",posZ)
+                        cell = [[lattice[0][0],lattice[0][1],lattice[0][2]],
+                                [lattice[1][0],lattice[1][1],lattice[1][2]],
+                                [lattice[2][0],lattice[2][1],lattice[2][2]]]
+                        self.sim_cell = cell
+                        atoms = Atoms(atom_labels, coord, cell=[(1, 0, 0),(0, 1, 0),(0, 0, 1)])
+                        atoms.set_cell(self.sim_cell, scale_atoms=True)
+                        coord = atoms.get_positions()
+                        backend.addArrayValues('atom_positions', np.asarray(coord))
+                        backend.addArrayValues('atom_labels', np.asarray(atom_labels))
+                        backend.addValue("simulation_cell", cell) 
+#                        print("coord===",coord)
+#    def is_number(s):
+#        try:
+#            float(s)
+#            return True
+#        except ValueError:
+#            return False
 
     def onClose_section_method(self, backend, gIndex, section):
 #        print("quoooo")
@@ -106,15 +187,26 @@ class SampleContext(object):
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
         self.mainFilePath = self.mainFileUri[0:-12]  
+        questa = os.getcwd()
+#        print("questa===",questa)
+#        print("self.mainFilePath===",self.mainFilePath)
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
+        meth = section['x_elastic_calculation_method'][0]
+#        print("meth===",meth)
         polFit2 = (nds-1)/2
         polFit4 = polFit2 - 1
         polFit6 = polFit2 - 2
         polFit2Cross = polFit2 - 1
         polFit4Cross = polFit4 - 1
         polFit6Cross = polFit6 - 1
+        polFit1 = (nds-1)/2
+        polFit3 = polFit1 - 1
+        polFit5 = polFit1 - 2
+        polFit1Cross = polFit1 - 1
+        polFit3Cross = polFit3 - 1
+        polFit5Cross = polFit5 - 1
         ext_uri = []
     #    os.chdir(self.mainFilePath)
 
@@ -186,29 +278,43 @@ class SampleContext(object):
 
         energy = []
         eta = []
-
+        LagrStress = []
+        LagrStress_dummy = []
+        physStress = []
+        physStress_dummy = []
+#        print("ECs===",ECs)
         for j in range(1, ECs+1):
             if (j<10):
                 Dstn = 'Dst0'+ str(j)
                 eta.append([])
                 energy.append([])
+#                LagrStress.append([])
+                LagrStress_dummy.append([])
+                physStress_dummy.append([])
             else:
                 Dstn = 'Dst' + str(j)
                 eta.append([])
                 energy.append([])
+#                LagrStress.append([])
+                LagrStress_dummy.append([])
+                physStress_dummy.append([])
 
 ###############ADDED BELOW###################
 #
-            cur_dir = os.getcwd() 
-#            print("cur_dir=", cur_dir)
+#            cur_dir = os.getcwd() 
+#            print("cur_dir====", cur_dir)
 #
 ##############ADDED ABOVE####################
 
             os.chdir(Dstn)
 
+#            cur_dir = os.getcwd()
+#            print("cur_dir=======", cur_dir)
+
             cur_dir = os.getcwd() 
-#            print("cur_dir=", cur_dir)
-#            print("elCode[0]=",elCode[0])
+#            print("energy=", energy)
+#            print("elCode[0]===",elCode[0])
+#            print("meth===",meth)
             if elCode[0] == 'exciting':
 #                print("ooooooooooexciting")
                 try:
@@ -254,7 +360,7 @@ class SampleContext(object):
                    energy[-1].append(float(dummy_energy)*ha_per_joule)
                 os.chdir('../')
 
-            elif elCode[0] == 'QUANTUM':
+            elif (elCode[0] == 'QUANTUM' or elCode[0] == 'Quantum') and meth == 'Energy':
 #                print("oooooooooooowien2k")
                 f = open(Dstn+'_Energy.dat', 'r')
                 while 1:
@@ -266,6 +372,53 @@ class SampleContext(object):
 #                   print("dummy_energy=",dummy_energy)
                    eta[-1].append(float(dummy_eta))
                    energy[-1].append(float(dummy_energy)*ha_per_joule)
+#                print("etaqui===",eta)
+                os.chdir('../')
+
+            elif elCode[0] == 'QUANTUM' and meth == 'Stress':
+#                print("oooooooooooowien2k")
+                f = open(Dstn+'_Lagrangian-stress.dat', 'r')
+                while 1:
+                   s = f.readline()
+                   if not s: break
+                   s = s.strip()
+                   s = s.split()
+                   if is_number(s[0]):
+#                   print("s===",s)
+                       dummy_eta = s[0] 
+                       dummy_LS1 = s[1]
+                       dummy_LS2 = s[2]
+                       dummy_LS3 = s[3]
+                       dummy_LS4 = s[4]
+                       dummy_LS5 = s[5]
+                       dummy_LS6 = s[6]
+#                   print("dummy_eta=",dummy_eta)
+#                   print("dummy_energy=",dummy_energy)
+                       eta[-1].append(float(dummy_eta))
+                       LagrStress_dummy[-1].append([float(dummy_LS1),float(dummy_LS2),float(dummy_LS3),float(dummy_LS4),float(dummy_LS5),float(dummy_LS6)])
+#                for i in range(len(LagrStress_dummy[-1])):
+#                print("eta===",eta)                    
+     
+                g = open(Dstn+'_Physical-stress.dat', 'r')
+                while 1:
+                   s = g.readline()
+                   if not s: break
+                   s = s.strip()
+                   s = s.split()
+                   if is_number(s[0]):
+#                   print("s===",s)
+#                       dummy_eta = s[0]
+                       dummy_PS1 = s[1]
+                       dummy_PS2 = s[2]
+                       dummy_PS3 = s[3]
+                       dummy_PS4 = s[4]
+                       dummy_PS5 = s[5]
+                       dummy_PS6 = s[6]
+#                   print("dummy_eta=",dummy_eta)
+#                   print("dummy_energy=",dummy_energy)
+#                       eta[-1].append(float(dummy_eta))
+                       physStress_dummy[-1].append([float(dummy_PS1),float(dummy_PS2),float(dummy_PS3),float(dummy_PS4),float(dummy_PS5),float(dummy_PS6)])
+#                print("physStr===",physStress)
                 os.chdir('../')
 
             else:
@@ -273,6 +426,8 @@ class SampleContext(object):
 
         defTyp = []
 
+#        cur_dir = os.getcwd()
+#        print("etta===", eta)
         f = open('Distorted_Parameters','r')
 
         while 1:
@@ -351,22 +506,43 @@ class SampleContext(object):
                        pass
                 else:
                     if ordr == 2:
-                        Dstn = 'Dst' + str(i) + '_d2E.dat'
+                        Dstna = 'Dst' + str(i) + '_d2E.dat'
+                        Dstnb = 'Dst' + str(i) + '_ddE.dat'
                     elif ordr == 3:
-                        Dstn = 'Dst'+ str(i) + '_d3E.dat'
-                    f = open (Dstn,'r')
-                    while 1:
-                        s = f.readline()
-                        if not s: break
-                        s = s.strip()
-                        if "order" in s.split():
-                            d2E_val_tot[-1].append([])
-                            d2E_eta_tot[-1].append([])
-                        elif len(s) >= 30:
-                            d2E_eta, d2E_values = s.split()
-                            d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                            d2E_eta_tot[-1][-1].append(float(d2E_eta))
-                    f.close()
+                        Dstna = 'Dst'+ str(i) + '_d3E.dat'
+                    try:
+                        f = open (Dstna,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                d2E_val_tot[-1].append([])
+                                d2E_eta_tot[-1].append([])
+                            elif len(s) >= 30:
+                                d2E_eta, d2E_values = s.split()
+                                d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
+                                d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                        f.close()
+                    except:
+                        pass
+                    try:
+                        f = open (Dstnb,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                d2E_val_tot[-1].append([])
+                                d2E_eta_tot[-1].append([])
+                            elif len(s) >= 30:
+                                d2E_eta, d2E_values = s.split()
+                                d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
+                                d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                        f.close()
+                    except:
+                        pass
+
                 d2E6_val.append(d2E_val_tot[i-1][0])
                 d2E4_val.append(d2E_val_tot[i-1][1])
                 d2E2_val.append(d2E_val_tot[i-1][2])
@@ -424,6 +600,124 @@ class SampleContext(object):
                 CrossVal2_eta.append(CrossVal_eta_tot[i-1][2])
 
             os.chdir('../')
+
+        elif 'Stress-vs-Strain' in prova:
+
+            os.chdir('Stress-vs-Strain')
+
+            dS5_val = [[],[],[],[],[],[]]
+            dS3_val = [[],[],[],[],[],[]]
+            dS1_val = [[],[],[],[],[],[]]
+            dS5_eta = [[],[],[],[],[],[]]
+            dS3_eta = [[],[],[],[],[],[]]
+            dS1_eta = [[],[],[],[],[],[]]
+            dS_val_tot = [[],[],[],[],[],[]]
+            dS_eta_tot = [[],[],[],[],[],[]]
+            string = []
+            stringCV = []
+
+            for i in range(6):
+                string.append('Dstn'+str(i+1))
+                stringCV.append('DstnCV'+str(i+1))
+            
+            for Dstn in string:
+                j = string.index(Dstn)
+                for i in range(1, ECs+1):
+                    dS_val_tot[string.index(Dstn)].append([])
+                    dS_eta_tot[string.index(Dstn)].append([])
+                    if (i<10):
+                        Dstn = 'Dst0'+ str(i) + '_LS' + str(string.index(Dstn)+1) + '_dS.dat'
+                        f = open (Dstn,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                dS_val_tot[j][-1].append([])
+                                dS_eta_tot[j][-1].append([])
+                            elif len(s) >= 30:
+                                dS_eta, dS_values = s.split()
+                                dS_val_tot[j][-1][-1].append(float(dS_values)*giga)
+                                dS_eta_tot[j][-1][-1].append(float(dS_eta))
+                        f.close()
+                    else:
+                        Dstn = 'Dst'+ str(i) + '_LS' + str(string.index(Dstn)+1) + '_dS.dat'
+                        f = open (Dstn,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                dS_val_tot[j][-1].append([])
+                                dS_eta_tot[j][-1].append([])
+                            elif len(s) >= 30:
+                                dS_eta, dS_values = s.split()
+                                dS_val_tot[j][-1][-1].append(float(dS_values)*giga)
+                                dS_eta_tot[j][-1][-1].append(float(dS_eta))
+                        f.close()
+
+                    dS5_val[j].append(dS_val_tot[j][i-1][0])
+                    dS3_val[j].append(dS_val_tot[j][i-1][1])
+                    dS1_val[j].append(dS_val_tot[j][i-1][2])
+                    dS5_eta[j].append(dS_eta_tot[j][i-1][0])
+                    dS3_eta[j].append(dS_eta_tot[j][i-1][1])
+                    dS1_eta[j].append(dS_eta_tot[j][i-1][2])
+
+            CrossVal5_val = [[],[],[],[],[],[]]
+            CrossVal3_val = [[],[],[],[],[],[]]
+            CrossVal1_val = [[],[],[],[],[],[]]
+            CrossVal_val_tot = [[],[],[],[],[],[]]
+
+            CrossVal5_eta = [[],[],[],[],[],[]]
+            CrossVal3_eta = [[],[],[],[],[],[]]
+            CrossVal1_eta = [[],[],[],[],[],[]]
+            CrossVal_eta_tot = [[],[],[],[],[],[]]
+
+            for DstnCV in stringCV:
+                j = stringCV.index(DstnCV)
+                for i in range(1, ECs+1):
+                    CrossVal_val_tot[stringCV.index(DstnCV)].append([])
+                    CrossVal_eta_tot[stringCV.index(DstnCV)].append([])
+                    if (i<10):
+                        DstnCV = 'Dst0'+ str(i) + '_LS' + str(stringCV.index(DstnCV)+1) + '_CVe.dat'
+                        f = open (DstnCV,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                CrossVal_val_tot[j][-1].append([])
+                                CrossVal_eta_tot[j][-1].append([])
+                            elif len(s) >= 20 and s.split()[0] != '#':
+                                CrossVal_eta, CrossVal_values = s.split()
+                                CrossVal_val_tot[j][-1][-1].append(float(CrossVal_values)*ha_per_joule)
+                                CrossVal_eta_tot[j][-1][-1].append(float(CrossVal_eta))
+                        f.close()
+                    else:
+                        DstnCV = 'Dst'+ str(i) + '_LS' + str(stringCV.index(DstnCV)+1) + '_CVe.dat'
+                        f = open (DstnCV,'r')
+                        while 1:
+                            s = f.readline()
+                            if not s: break
+                            s = s.strip()
+                            if "order" in s.split():
+                                CrossVal_val_tot[j][-1].append([])
+                                CrossVal_eta_tot[j][-1].append([])
+                            elif len(s) >= 20 and s.split()[0] != '#':
+                                CrossVal_eta, CrossVal_values = s.split()
+                                CrossVal_val_tot[j][-1][-1].append(float(CrossVal_values)*ha_per_joule)
+                                CrossVal_eta_tot[j][-1][-1].append(float(CrossVal_eta))
+                        f.close()
+                    CrossVal5_val[j].append(CrossVal_val_tot[j][i-1][0])
+                    CrossVal3_val[j].append(CrossVal_val_tot[j][i-1][1])
+                    CrossVal1_val[j].append(CrossVal_val_tot[j][i-1][2])
+                    CrossVal5_eta[j].append(CrossVal_eta_tot[j][i-1][0])
+                    CrossVal3_eta[j].append(CrossVal_eta_tot[j][i-1][1])
+                    CrossVal1_eta[j].append(CrossVal_eta_tot[j][i-1][2])
+#                    print("CrossVal5_val===",CrossVal5_val)
+            os.chdir('../')
+
+########################################################################
         else:
             pass
 
@@ -434,12 +728,33 @@ class SampleContext(object):
 
         EC_eigen = []
 
-        for i in range(1, ECs+1):
-            s = f.readline()
-            s = s.strip()
-            dummy, etaEC_dummy, fitEC_dummy = s.split()
-            self.etaEC.append(float(etaEC_dummy))
-            self.fitEC.append(int(fitEC_dummy))
+        if meth == 'Energy':
+            for i in range(1, ECs+1):
+                s = f.readline()
+                s = s.strip()
+                dummy, etaEC_dummy, fitEC_dummy = s.split()
+                self.etaEC.append(float(etaEC_dummy))
+                self.fitEC.append(int(fitEC_dummy))
+
+        elif meth == 'Stress':
+#            etaMax = []
+#            fit = []
+            while 1:
+                s = f.readline()
+                if not s: break
+                s = s.strip()
+                s = s.split()
+#                print("s===",s)
+                if not is_number(s[0]):
+                    self.etaEC.append([])
+                    for i in range(6): self.etaEC[-1].append(float(s[i+1]))
+                else:
+                    self.fitEC.append([])
+                    for i in range(6): self.fitEC[-1].append(int(s[i]))
+#                print("eta===",eta)
+#                print("fit===",fit)
+        else:
+            pass
 
         f.close()
 
@@ -513,60 +828,191 @@ class SampleContext(object):
 
 #            backend.addValue("x_elastic_deformation_types", defTyp)
 #            backend.addValue("x_elastic_number_of_deformations", defNum)
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "energy")
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
-            backend.addValue("x_elastic_strain_diagram_eta_values", eta)
-            backend.addValue("x_elastic_strain_diagram_values", energy)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+#            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+#            backend.addValue("x_elastic_strain_diagram_type", "energy")
+#            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
+#            backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+#            backend.addValue("x_elastic_strain_diagram_values", energy)
+#            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+#            print("eta===",eta)
+            if meth == 'Energy':
+#                print("eta===",eta)
+#                print("CrossVal2_eta===",CrossVal2_eta)
+#                print("d2E2_eta===",d2E2_eta)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "energy")
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
+                backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+                backend.addValue("x_elastic_strain_diagram_values", energy)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+#                print("CrossVal2_eta=",CrossVal2_eta)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2Cross)
+                backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal2_eta)
+                backend.addValue("x_elastic_strain_diagram_values", CrossVal2_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2Cross)
-            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal2_eta)
-            backend.addValue("x_elastic_strain_diagram_values", CrossVal2_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4Cross)
+                backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal4_eta)
+                backend.addValue("x_elastic_strain_diagram_values", CrossVal4_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4Cross)
-            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal4_eta)
-            backend.addValue("x_elastic_strain_diagram_values", CrossVal4_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6Cross)
+                backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal6_eta)
+                backend.addValue("x_elastic_strain_diagram_values", CrossVal6_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6Cross)
-            backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal6_eta)
-            backend.addValue("x_elastic_strain_diagram_values", CrossVal6_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "d2E")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2E2_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2E2_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "d2E")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2)
-            backend.addValue("x_elastic_strain_diagram_eta_values", d2E2_eta)
-            backend.addValue("x_elastic_strain_diagram_values", d2E2_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "d2E")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2E4_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2E4_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "d2E")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4)
-            backend.addValue("x_elastic_strain_diagram_eta_values", d2E4_eta)
-            backend.addValue("x_elastic_strain_diagram_values", d2E4_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                backend.addValue("x_elastic_strain_diagram_type", "d2E")
+                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+                backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2E6_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2E6_val)
+                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-            backend.addValue("x_elastic_strain_diagram_type", "d2E")
-            backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
-            backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6)
-            backend.addValue("x_elastic_strain_diagram_eta_values", d2E6_eta)
-            backend.addValue("x_elastic_strain_diagram_values", d2E6_val)
-            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+            elif meth == 'Stress':
+#                pass
+#                print("LagrStressInizio===",LagrStress)
+#                print("LagrStress_dummy===",LagrStress_dummy)
+                for k in range(6):
+                    LagrStress.append([])
+                    physStress.append([])
+#                    print("LagrStressKVoigt===",LagrStress)
+                    for j in range(len(LagrStress_dummy)):
+                        LagrStress[-1].append([])
+                        physStress[-1].append([])
+#                        print("LagrStressJDeform===",LagrStress)
+                        for i in range(len(LagrStress_dummy[j])):
+#                            print("Voigt===",k)
+#                            print("deform===",j)
+#                            print("eta===",i)
+#                            print("LagrStress_dummy[j][k][i]===",LagrStress_dummy[j][i][k])
+                            LagrStress[k][j].append(LagrStress_dummy[j][i][k])
+                            physStress[k][j].append(physStress_dummy[j][i][k])
+#                    for j in range(len(LagrStress_dummy[i])):
+#                    for k in range(6):
+#                        LagrStress[i].append([])
+#                        for j in range(len(LagrStress_dummy[i])):
+#                            LagrStress[i][k].append(LagrStress_dummy[i][j][k])
+#                print("LagrStress_dummy===",LagrStress_dummy)
+#                print("physStress_dummy===",physStress_dummy)
+#                print("LagrStress===",LagrStress)
+#                print("physStress===",physStress) 
+#                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+#                backend.addValue("x_elastic_strain_diagram_type", "Lagrangian-stress")
+#                backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(k+1))
+#                backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
+#                backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+#                backend.addValue("x_elastic_strain_diagram_values", LagrStress[i][k])
+#                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                 
+#                print("LagrStress===",LagrStress)
+                for i in range(0,6):
+#                    print("eta===",eta)
+#                    print("eta[0]===",eta)
+#                    print("LagrStress===",LagrStress)
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "Lagrangian-stress")
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
+                    backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+#                    backend.addArrayValues("x_elastic_strain_diagram_eta_values",np.asarray(eta))
+                    backend.addValue("x_elastic_strain_diagram_values", LagrStress[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "Physical-stress")
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
+                    backend.addValue("x_elastic_strain_diagram_eta_values", eta)
+#                    backend.addArrayValues("x_elastic_strain_diagram_eta_values",np.asarray(eta))
+                    backend.addValue("x_elastic_strain_diagram_values", physStress[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+#        backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
+
+#                    print("CrossVal1_eta===",CrossVal1_eta)
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 1)
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit1Cross)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal1_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", CrossVal1_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 3)
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit3Cross)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal3_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", CrossVal3_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 5)
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit5Cross)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal5_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", CrossVal5_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "dtn")
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 1)
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit1)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", dS1_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", dS1_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "dtn")
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 3)
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit3)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", dS3_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", dS3_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+
+                    elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
+                    backend.addValue("x_elastic_strain_diagram_type", "dtn")
+                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 5)
+                    backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
+                    backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit5)
+                    backend.addValue("x_elastic_strain_diagram_eta_values", dS5_eta[i])
+                    backend.addValue("x_elastic_strain_diagram_values", dS5_val[i])
+                    backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
+                
+            else:
+                pass
 
             backend.addValue('x_elastic_2nd_order_constants_notation_matrix',voigtMat)
             backend.addValue('x_elastic_2nd_order_constants_matrix',ECMat)
@@ -587,10 +1033,13 @@ class SampleContext(object):
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
             backend.addValue("x_elastic_deformation_types", defTyp)
             backend.addValue("x_elastic_number_of_deformations", defNum)
-            elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
-            backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
-            backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
-            backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
+            if meth == "Energy":
+                elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
+                backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
+                backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+                backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
+            else:
+                pass
 
         elif ordr == 3:
             f = open ('ElaStic_'+str(ordr)+'rd.out','r')
@@ -1092,10 +1541,13 @@ class SampleContext(object):
             backend.closeSection("section_single_configuration_calculation", elasticGIndex)
             backend.addValue("x_elastic_deformation_types", defTyp)
             backend.addValue("x_elastic_number_of_deformations", defNum)
-            elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
-            backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
-            backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
-            backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
+            if meth == "Energy":
+                elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
+                backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
+                backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+                backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
+            else:
+                pass
 
     def onClose_section_single_configuration_calculation(self, backend, gIndex, section):
 #    logging.error("BASE onClose_section_single_configuration_calculation")
