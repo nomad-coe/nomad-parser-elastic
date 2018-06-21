@@ -17,7 +17,7 @@ import setup_paths
 import numpy as np
 from nomadcore.unit_conversion.unit_conversion import convert_unit
 from nomadcore.parser_backend import JsonParseEventsWriterBackend
-from nomadcore.simple_parser import mainFunction
+from nomadcore.simple_parser import mainFunction, AncillaryParser, CachingLevel
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 from nomadcore.unit_conversion import unit_conversion
@@ -36,7 +36,6 @@ class SampleContext(object):
 
     def __init__(self): 
 #        self.mainFileUri = sys.argv[1]  #exciting !!!!!!LOCAL HOME!!!!!!!!             OKOKOKOK
-#        print("self.mainFileUri===init==",self.mainFileUri)
         self.mainFileUri = sys.argv[2]  #exciting !!! FOR NOMAD URI nmd:// or sbt -> zip file!!!!!!!!   OKOKKOOK
         self.parser = None
         self.mainFilePath = None
@@ -50,7 +49,7 @@ class SampleContext(object):
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse different files"""
-        pass
+        self.metaInfoEnv = self.parser.parserBuilder.metaInfoEnv
 
     def onOpen_section_system(self, backend, gIndex, section):
         self.secSystemIndex = gIndex
@@ -69,36 +68,32 @@ class SampleContext(object):
         backend.addValue('program_version', '1.0')
 
     def onClose_section_system(self, backend, gIndex, section):
-#        print("quiiiii")
         backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
         dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first    OKOKOKKO
         self.mainFile = self.parser.fIn.name             
         self.mainFilePath = self.mainFile[0:-12]   
-#        print("self.mainFileUri=",self.mainFileUri)
 #        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
-#        print("dirPath===",dirPath)
-#        print("os.listdir(dirPath)=",os.listdir(dirPath))
-#        for files in os.listdir(self.mainFilePath):
         for files in os.listdir(dirPath):
             if files[-3:] == "xml":
                 inputFile = files
-#                print("Exself.mainFilePath=",self.mainFilePath)
-#                print("inputFile=",inputFile)
                 os.chdir(self.mainFilePath)
                 with open(inputFile) as f:
                     elastic_parser_input_exciting.parseInput(f, backend)
             elif files[-6:] == "struct":
                 inputFile = files
-#                print("Wiself.mainFilePath=",self.mainFilePath)
-#                print("inputFile=",inputFile)
                 os.chdir(self.mainFilePath)
-                with open(inputFile) as g:
-                    while 1:
-                        s = g.readline()
-                        if not s: break
-                        s = s.strip()
+                structSuperContext = elastic_parser_input_wien2k.Wien2kStructContext()
+                structParser = AncillaryParser(
+                    fileDescription = elastic_parser_input_wien2k.buildStructureMatchers(),
+                    parser = self.parser,
+                    cachingLevelForMetaName = elastic_parser_input_wien2k.get_cachingLevelForMetaName(self.metaInfoEnv, CachingLevel.PreOpenedIgnore),
+                    superContext = structSuperContext)
+
+                with open(inputFile) as fIn:
+                    structParser.parseFile(fIn)
+
             elif files[-3:] == ".in":         ##### so far it works only for Rostam's calculations
                 if files != "ElaStic_2nd.in":
                     inputFile = files
@@ -109,8 +104,6 @@ class SampleContext(object):
                     coord = []
                     lattice = []
                     check = False
-#                    alat = 1
-#                    print("inputFile=",inputFile)
                     os.chdir(self.mainFilePath)
                     with open(inputFile) as g:
                         fromB = unit_conversion.convert_unit_function("bohr", "m")
@@ -119,11 +112,7 @@ class SampleContext(object):
                             if not s: break
                             s = s.strip()
                             s = s.split()
-#                            print("s===",s)
-#                            print("s[0]===",s[0])
-#                            print("len(s)===",len(s))
                             if s[0] == "ibrav":         ####### Rostam's: ibrav always 0
-#                                print("s[0]===",s[0])
                                 ibrav = s[2]
                             elif s[0] == "celldm(1)":
                                 alat = float(s[2])
@@ -137,31 +126,9 @@ class SampleContext(object):
                                     lattice.append([fromB(alat*float(s[0])),fromB(alat*float(s[1])),fromB(alat*float(s[2]))])
                                 else:
                                     pass
-#                                try: 
-#                                    float(s[0])                   
-#                                    return check = True
-#                                except:
-#                                    check = False
-#                                print("check===",check)
-#                                for i in range(3):
-#                                try:
-#                                    lattice.append(float(s[0]),float(s[1]),float(s[2]))
-#                                    print("qui????")
-#                                except:
-#                                    print("quo???")
-                    #                pass    
-#                        print("lattice===",lattice)
+
                         for i in range(len(atom_labels)):
                             coord.append([posX[i],posY[i],posZ[i]])
-#                            for j in range(3):
-#                            coord[i][0] = posX[i]
-#                            coord[i][1] = posY[i]
-#                            coord[i][2] = posZ[i]
-#                        print("alat===",alat)
-#                        print("atoms===",atoms)
-#                        print("posX===",posX)
-#                        print("posY===",posY)
-#                        print("posZ===",posZ)
                         cell = [[lattice[0][0],lattice[0][1],lattice[0][2]],
                                 [lattice[1][0],lattice[1][1],lattice[1][2]],
                                 [lattice[2][0],lattice[2][1],lattice[2][2]]]
@@ -172,29 +139,18 @@ class SampleContext(object):
                         backend.addArrayValues('atom_positions', np.asarray(coord))
                         backend.addArrayValues('atom_labels', np.asarray(atom_labels))
                         backend.addValue("simulation_cell", cell) 
-#                        print("coord===",coord)
-#    def is_number(s):
-#        try:
-#            float(s)
-#            return True
-#        except ValueError:
-#            return False
 
     def onClose_section_method(self, backend, gIndex, section):
-#        print("quoooo")
         ha_per_joule = convert_unit(1, "hartree", "J")
         giga = 10**9
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
         self.mainFilePath = self.mainFileUri[0:-12]  
         questa = os.getcwd()
-#        print("questa===",questa)
-#        print("self.mainFilePath===",self.mainFilePath)
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
         nds = int(section['x_elastic_number_of_distorted_structures'][0])
         meth = section['x_elastic_calculation_method'][0]
-#        print("meth===",meth)
         polFit2 = (nds-1)/2
         polFit4 = polFit2 - 1
         polFit6 = polFit2 - 2
@@ -208,13 +164,7 @@ class SampleContext(object):
         polFit3Cross = polFit3 - 1
         polFit5Cross = polFit5 - 1
         ext_uri = []
-    #    os.chdir(self.mainFilePath)
 
-###################NEW###################
-#        for def_str in os.listdir():
-#            print("def_str=", def_str)
-
-##################END NEW################
         i = 1
         while 1:
             if (i<10):
@@ -233,7 +183,6 @@ class SampleContext(object):
         defNum = i - 1
         ECs = defNum
 
-###############ADDED BELOW###################
         for j in range(1, ECs+1):
             for i in range(1,nds+1):
                 if (j<10):
@@ -242,10 +191,8 @@ class SampleContext(object):
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/INFO.OUT')
                         elif elCode[0] == 'WIEN':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/Dst0'+ str(j) + '_0' + str(i) + '_Converged.scf')
-#                            pass
                         elif elCode[0] == 'QUANTUM':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) + '/Dst0' + str(j) + '_0' + str(i) + '/Dst0'+ str(j) + '_0' + str(i) + '.out')
-#####################above: to be repeated below for the wien2k and QE################
                     else:
                         if elCode[0] == 'exciting':
                             ext_uri.append(self.mainFilePath + 'Dst0' + str(j) +  '/Dst0' + str(j) + '_' + str(i) + '/INFO.OUT')
@@ -274,49 +221,30 @@ class SampleContext(object):
             backend.addValue("calculation_to_calculation_kind", "source_calculation")
             backend.closeSection("section_calculation_to_calculation_refs", refGindex)
 
-##############ADDED ABOVE####################
-
         energy = []
         eta = []
         LagrStress = []
         LagrStress_dummy = []
         physStress = []
         physStress_dummy = []
-#        print("ECs===",ECs)
         for j in range(1, ECs+1):
             if (j<10):
                 Dstn = 'Dst0'+ str(j)
                 eta.append([])
                 energy.append([])
-#                LagrStress.append([])
                 LagrStress_dummy.append([])
                 physStress_dummy.append([])
             else:
                 Dstn = 'Dst' + str(j)
                 eta.append([])
                 energy.append([])
-#                LagrStress.append([])
                 LagrStress_dummy.append([])
                 physStress_dummy.append([])
 
-###############ADDED BELOW###################
-#
-#            cur_dir = os.getcwd() 
-#            print("cur_dir====", cur_dir)
-#
-##############ADDED ABOVE####################
-
             os.chdir(Dstn)
-
-#            cur_dir = os.getcwd()
-#            print("cur_dir=======", cur_dir)
-
             cur_dir = os.getcwd() 
-#            print("energy=", energy)
-#            print("elCode[0]===",elCode[0])
-#            print("meth===",meth)
+
             if elCode[0] == 'exciting':
-#                print("ooooooooooexciting")
                 try:
                    f = open(Dstn+'-Energy.dat', 'r')
                    while 1:
@@ -324,8 +252,6 @@ class SampleContext(object):
                       if not s: break
                       s = s.strip()
                       dummy_eta, dummy_energy = s.split()
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
                       eta[-1].append(float(dummy_eta))
                       energy[-1].append(float(dummy_energy)*ha_per_joule)
                    os.chdir('../')
@@ -338,8 +264,6 @@ class SampleContext(object):
                       if not s: break
                       s = s.strip()
                       dummy_eta, dummy_energy = s.split()
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
                       eta[-1].append(float(dummy_eta))
                       energy[-1].append(float(dummy_energy)*ha_per_joule)
                    os.chdir('../')
@@ -347,36 +271,28 @@ class SampleContext(object):
                    pass
 
             elif elCode[0] == 'WIEN': 
-#                print("oooooooooooowien2k")
                 f = open(Dstn+'_Energy.dat', 'r')
                 while 1:
                    s = f.readline()
                    if not s: break
                    s = s.strip()
                    dummy_eta, dummy_energy = s.split()
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
                    eta[-1].append(float(dummy_eta))
                    energy[-1].append(float(dummy_energy)*ha_per_joule)
                 os.chdir('../')
 
             elif (elCode[0] == 'QUANTUM' or elCode[0] == 'Quantum') and meth == 'Energy':
-#                print("oooooooooooowien2k")
                 f = open(Dstn+'_Energy.dat', 'r')
                 while 1:
                    s = f.readline()
                    if not s: break
                    s = s.strip()
                    dummy_eta, dummy_energy = s.split()
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
                    eta[-1].append(float(dummy_eta))
                    energy[-1].append(float(dummy_energy)*ha_per_joule)
-#                print("etaqui===",eta)
                 os.chdir('../')
 
             elif elCode[0] == 'QUANTUM' and meth == 'Stress':
-#                print("oooooooooooowien2k")
                 f = open(Dstn+'_Lagrangian-stress.dat', 'r')
                 while 1:
                    s = f.readline()
@@ -384,7 +300,6 @@ class SampleContext(object):
                    s = s.strip()
                    s = s.split()
                    if is_number(s[0]):
-#                   print("s===",s)
                        dummy_eta = s[0] 
                        dummy_LS1 = s[1]
                        dummy_LS2 = s[2]
@@ -392,12 +307,8 @@ class SampleContext(object):
                        dummy_LS4 = s[4]
                        dummy_LS5 = s[5]
                        dummy_LS6 = s[6]
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
                        eta[-1].append(float(dummy_eta))
                        LagrStress_dummy[-1].append([float(dummy_LS1),float(dummy_LS2),float(dummy_LS3),float(dummy_LS4),float(dummy_LS5),float(dummy_LS6)])
-#                for i in range(len(LagrStress_dummy[-1])):
-#                print("eta===",eta)                    
      
                 g = open(Dstn+'_Physical-stress.dat', 'r')
                 while 1:
@@ -406,19 +317,13 @@ class SampleContext(object):
                    s = s.strip()
                    s = s.split()
                    if is_number(s[0]):
-#                   print("s===",s)
-#                       dummy_eta = s[0]
                        dummy_PS1 = s[1]
                        dummy_PS2 = s[2]
                        dummy_PS3 = s[3]
                        dummy_PS4 = s[4]
                        dummy_PS5 = s[5]
                        dummy_PS6 = s[6]
-#                   print("dummy_eta=",dummy_eta)
-#                   print("dummy_energy=",dummy_energy)
-#                       eta[-1].append(float(dummy_eta))
                        physStress_dummy[-1].append([float(dummy_PS1),float(dummy_PS2),float(dummy_PS3),float(dummy_PS4),float(dummy_PS5),float(dummy_PS6)])
-#                print("physStr===",physStress)
                 os.chdir('../')
 
             else:
@@ -426,8 +331,6 @@ class SampleContext(object):
 
         defTyp = []
 
-#        cur_dir = os.getcwd()
-#        print("etta===", eta)
         f = open('Distorted_Parameters','r')
 
         while 1:
@@ -445,12 +348,7 @@ class SampleContext(object):
 
         f.close()
         prova = os.listdir('.')
-#        print("prova= ",prova)
         if 'Energy-vs-Strain' in prova:
-#        if my_file.is_dir():
-#            print("esiste! :-)")
-#        else:
-#            print("non esiste :-(")
             os.chdir('Energy-vs-Strain')
 
             d2E6_val = []
@@ -714,10 +612,8 @@ class SampleContext(object):
                     CrossVal5_eta[j].append(CrossVal_eta_tot[j][i-1][0])
                     CrossVal3_eta[j].append(CrossVal_eta_tot[j][i-1][1])
                     CrossVal1_eta[j].append(CrossVal_eta_tot[j][i-1][2])
-#                    print("CrossVal5_val===",CrossVal5_val)
             os.chdir('../')
 
-########################################################################
         else:
             pass
 
@@ -737,22 +633,17 @@ class SampleContext(object):
                 self.fitEC.append(int(fitEC_dummy))
 
         elif meth == 'Stress':
-#            etaMax = []
-#            fit = []
             while 1:
                 s = f.readline()
                 if not s: break
                 s = s.strip()
                 s = s.split()
-#                print("s===",s)
                 if not is_number(s[0]):
                     self.etaEC.append([])
                     for i in range(6): self.etaEC[-1].append(float(s[i+1]))
                 else:
                     self.fitEC.append([])
                     for i in range(6): self.fitEC[-1].append(int(s[i]))
-#                print("eta===",eta)
-#                print("fit===",fit)
         else:
             pass
 
@@ -826,26 +717,13 @@ class SampleContext(object):
                     ECMat[i][j] = float(ECMat[j][i])*giga
                     complMat[i][j] = float(complMat[j][i])/giga
 
-#            backend.addValue("x_elastic_deformation_types", defTyp)
-#            backend.addValue("x_elastic_number_of_deformations", defNum)
-#            elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-#            backend.addValue("x_elastic_strain_diagram_type", "energy")
-#            backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
-#            backend.addValue("x_elastic_strain_diagram_eta_values", eta)
-#            backend.addValue("x_elastic_strain_diagram_values", energy)
-#            backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
-#            print("eta===",eta)
             if meth == 'Energy':
-#                print("eta===",eta)
-#                print("CrossVal2_eta===",CrossVal2_eta)
-#                print("d2E2_eta===",d2E2_eta)
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                 backend.addValue("x_elastic_strain_diagram_type", "energy")
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
                 backend.addValue("x_elastic_strain_diagram_eta_values", eta)
                 backend.addValue("x_elastic_strain_diagram_values", energy)
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
-#                print("CrossVal2_eta=",CrossVal2_eta)
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                 backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
                 backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
@@ -895,53 +773,22 @@ class SampleContext(object):
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
             elif meth == 'Stress':
-#                pass
-#                print("LagrStressInizio===",LagrStress)
-#                print("LagrStress_dummy===",LagrStress_dummy)
                 for k in range(6):
                     LagrStress.append([])
                     physStress.append([])
-#                    print("LagrStressKVoigt===",LagrStress)
                     for j in range(len(LagrStress_dummy)):
                         LagrStress[-1].append([])
                         physStress[-1].append([])
-#                        print("LagrStressJDeform===",LagrStress)
                         for i in range(len(LagrStress_dummy[j])):
-#                            print("Voigt===",k)
-#                            print("deform===",j)
-#                            print("eta===",i)
-#                            print("LagrStress_dummy[j][k][i]===",LagrStress_dummy[j][i][k])
                             LagrStress[k][j].append(LagrStress_dummy[j][i][k])
                             physStress[k][j].append(physStress_dummy[j][i][k])
-#                    for j in range(len(LagrStress_dummy[i])):
-#                    for k in range(6):
-#                        LagrStress[i].append([])
-#                        for j in range(len(LagrStress_dummy[i])):
-#                            LagrStress[i][k].append(LagrStress_dummy[i][j][k])
-#                print("LagrStress_dummy===",LagrStress_dummy)
-#                print("physStress_dummy===",physStress_dummy)
-#                print("LagrStress===",LagrStress)
-#                print("physStress===",physStress) 
-#                elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-#                backend.addValue("x_elastic_strain_diagram_type", "Lagrangian-stress")
-#                backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(k+1))
-#                backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
-#                backend.addValue("x_elastic_strain_diagram_eta_values", eta)
-#                backend.addValue("x_elastic_strain_diagram_values", LagrStress[i][k])
-#                backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
-
                  
-#                print("LagrStress===",LagrStress)
                 for i in range(0,6):
-#                    print("eta===",eta)
-#                    print("eta[0]===",eta)
-#                    print("LagrStress===",LagrStress)
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "Lagrangian-stress")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
                     backend.addValue("x_elastic_strain_diagram_eta_values", eta)
-#                    backend.addArrayValues("x_elastic_strain_diagram_eta_values",np.asarray(eta))
                     backend.addValue("x_elastic_strain_diagram_values", LagrStress[i])
                     backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
                 
@@ -950,13 +797,9 @@ class SampleContext(object):
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", len(eta[0]))
                     backend.addValue("x_elastic_strain_diagram_eta_values", eta)
-#                    backend.addArrayValues("x_elastic_strain_diagram_eta_values",np.asarray(eta))
                     backend.addValue("x_elastic_strain_diagram_values", physStress[i])
                     backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
-#        backend.addArrayValues('configuration_periodic_dimensions', np.asarray([True, True, True]))
-
-#                    print("CrossVal1_eta===",CrossVal1_eta)
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
@@ -1560,23 +1403,18 @@ mainFileDescription = \
               startReStr = "",
               subMatchers = [
               SM(name = 'input',
-#                weak = True,
                 startReStr = r"\s*Order of elastic constants\s*=\s*(?P<x_elastic_elastic_constant_order>[0-9]+)",
-#                startReStr = "",
-#                endReStr = r"\*sNumber of distorted structures\*s=\s*(?P<x_elastic_number_of_disordered_structures>[0-9]+)",
                 repeats = False,
                 required = False,
                 forwardMatch = False,
                 sections   = ['section_run', 'section_method'],
                 subMatchers = [
-#                  SM(r"\s*Order of elastic constants\s*=\s*(?P<x_elastic_elastic_constant_order>[0-9]+)"),
                   SM(r"\s*Method of calculation\s*=\s*(?P<x_elastic_calculation_method>[-a-zA-Z]+)"),
                   SM(r"\s*DFT code name\s*=\s*(?P<x_elastic_code>[-a-zA-Z]+)"),
                   SM(name = 'system',
                   startReStr = r"\s*Space-group number\s*=\s*(?P<x_elastic_space_group_number>[0-9]+)",
                   sections = ['section_system'],
                   subMatchers = [
-#                  SM(r"\s*Space-group number\s*=\s*(?P<x_elastic_space_group_number>[0-9]+)"),
                   SM(r"\s*Volume of equilibrium unit cell\s*=\s*(?P<x_elastic_unit_cell_volume__bohr3>[-0-9.]+)\s*\[a.u\^3\]")
                   ]),
                   SM(r"\s*Maximum Lagrangian strain\s*=\s*(?P<x_elastic_max_lagrangian_strain>[0-9.]+)"),
@@ -1596,4 +1434,3 @@ metaInfoEnv, warnings = loadJsonFile(filePath = metaInfoPath, dependencyLoader =
 if __name__ == "__main__":
     superContext = SampleContext()
     mainFunction(mainFileDescription, metaInfoEnv, parserInfo, superContext = superContext)
-#    mainFileUri = sys.argv[1]
