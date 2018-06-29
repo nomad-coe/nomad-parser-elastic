@@ -351,21 +351,21 @@ class SampleContext(object):
         if 'Energy-vs-Strain' in prova:
             os.chdir('Energy-vs-Strain')
 
-            d2E6_val = []
-            d2E4_val = []
-            d2E2_val = []
-            d2E6_eta = []
-            d2E4_eta = []
-            d2E2_eta = []
-            d2E_val_tot = []
-            d2E_eta_tot = []
+            d2e6_val = []
+            d2e4_val = []
+            d2e2_val = []
+            d2e6_eta = []
+            d2e4_eta = []
+            d2e2_eta = []
+            d2e_val_tot = []
+            d2e_eta_tot = []
 
             for i in range(1, ECs+1):
-                d2E_val_tot.append([])
-                d2E_eta_tot.append([])
+                d2e_val_tot.append([])
+                d2e_eta_tot.append([])
                 if (i<10):
                     if ordr == 2:
-                        Dstna = 'Dst0'+ str(i) + '_d2E.dat'
+                        Dstna = 'Dst0'+ str(i) + '_d2e.dat'
                         Dstnb = 'Dst0'+ str(i) + '_ddE.dat'
                     elif ordr == 3:
                         Dstna = 'Dst0'+ str(i) + '_d3E.dat'
@@ -377,12 +377,12 @@ class SampleContext(object):
                            if not s: break
                            s = s.strip()
                            if "order" in s.split():
-                               d2E_val_tot[-1].append([])
-                               d2E_eta_tot[-1].append([])
+                               d2e_val_tot[-1].append([])
+                               d2e_eta_tot[-1].append([])
                            elif len(s) >= 30:
-                               d2E_eta, d2E_values = s.split()
-                               d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                               d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                               d2e_eta, d2e_values = s.split()
+                               d2e_val_tot[-1][-1].append(float(d2e_values)*giga)
+                               d2e_eta_tot[-1][-1].append(float(d2e_eta))
                        f.close()
                     except:
                        pass
@@ -393,18 +393,18 @@ class SampleContext(object):
                            if not s: break
                            s = s.strip()
                            if "order" in s.split():
-                               d2E_val_tot[-1].append([])
-                               d2E_eta_tot[-1].append([])
+                               d2e_val_tot[-1].append([])
+                               d2e_eta_tot[-1].append([])
                            elif len(s) >= 30:
-                               d2E_eta, d2E_values = s.split()
-                               d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                               d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                               d2e_eta, d2e_values = s.split()
+                               d2e_val_tot[-1][-1].append(float(d2e_values)*giga)
+                               d2e_eta_tot[-1][-1].append(float(d2e_eta))
                        f.close()
                     except:
                        pass
                 else:
                     if ordr == 2:
-                        Dstna = 'Dst' + str(i) + '_d2E.dat'
+                        Dstna = 'Dst' + str(i) + '_d2e.dat'
                         Dstnb = 'Dst' + str(i) + '_ddE.dat'
                     elif ordr == 3:
                         Dstna = 'Dst'+ str(i) + '_d3E.dat'
@@ -415,12 +415,12 @@ class SampleContext(object):
                             if not s: break
                             s = s.strip()
                             if "order" in s.split():
-                                d2E_val_tot[-1].append([])
-                                d2E_eta_tot[-1].append([])
+                                d2e_val_tot[-1].append([])
+                                d2e_eta_tot[-1].append([])
                             elif len(s) >= 30:
-                                d2E_eta, d2E_values = s.split()
-                                d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                                d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                                d2e_eta, d2e_values = s.split()
+                                d2e_val_tot[-1][-1].append(float(d2e_values)*giga)
+                                d2e_eta_tot[-1][-1].append(float(d2e_eta))
                         f.close()
                     except:
                         pass
@@ -431,22 +431,22 @@ class SampleContext(object):
                             if not s: break
                             s = s.strip()
                             if "order" in s.split():
-                                d2E_val_tot[-1].append([])
-                                d2E_eta_tot[-1].append([])
+                                d2e_val_tot[-1].append([])
+                                d2e_eta_tot[-1].append([])
                             elif len(s) >= 30:
-                                d2E_eta, d2E_values = s.split()
-                                d2E_val_tot[-1][-1].append(float(d2E_values)*giga)
-                                d2E_eta_tot[-1][-1].append(float(d2E_eta))
+                                d2e_eta, d2e_values = s.split()
+                                d2e_val_tot[-1][-1].append(float(d2e_values)*giga)
+                                d2e_eta_tot[-1][-1].append(float(d2e_eta))
                         f.close()
                     except:
                         pass
 
-                d2E6_val.append(d2E_val_tot[i-1][0])
-                d2E4_val.append(d2E_val_tot[i-1][1])
-                d2E2_val.append(d2E_val_tot[i-1][2])
-                d2E6_eta.append(d2E_eta_tot[i-1][0])
-                d2E4_eta.append(d2E_eta_tot[i-1][1])
-                d2E2_eta.append(d2E_eta_tot[i-1][2])
+                d2e6_val.append(d2e_val_tot[i-1][0])
+                d2e4_val.append(d2e_val_tot[i-1][1])
+                d2e2_val.append(d2e_val_tot[i-1][2])
+                d2e6_eta.append(d2e_eta_tot[i-1][0])
+                d2e4_eta.append(d2e_eta_tot[i-1][1])
+                d2e2_eta.append(d2e_eta_tot[i-1][2])
             CrossVal6_val = []
             CrossVal4_val = []
             CrossVal2_val = []
@@ -726,7 +726,7 @@ class SampleContext(object):
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                 backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 2)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2Cross)
                 backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal2_eta)
                 backend.addValue("x_elastic_strain_diagram_values", CrossVal2_val)
@@ -734,7 +734,7 @@ class SampleContext(object):
 
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                 backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 4)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4Cross)
                 backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal4_eta)
                 backend.addValue("x_elastic_strain_diagram_values", CrossVal4_val)
@@ -742,34 +742,34 @@ class SampleContext(object):
 
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                 backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 6)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6Cross)
                 backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal6_eta)
                 backend.addValue("x_elastic_strain_diagram_values", CrossVal6_val)
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-                backend.addValue("x_elastic_strain_diagram_type", "d2E")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 2)
+                backend.addValue("x_elastic_strain_diagram_type", "d2e")
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 2)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit2)
-                backend.addValue("x_elastic_strain_diagram_eta_values", d2E2_eta)
-                backend.addValue("x_elastic_strain_diagram_values", d2E2_val)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2e2_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2e2_val)
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-                backend.addValue("x_elastic_strain_diagram_type", "d2E")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 4)
+                backend.addValue("x_elastic_strain_diagram_type", "d2e")
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 4)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit4)
-                backend.addValue("x_elastic_strain_diagram_eta_values", d2E4_eta)
-                backend.addValue("x_elastic_strain_diagram_values", d2E4_val)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2e4_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2e4_val)
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
                 elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
-                backend.addValue("x_elastic_strain_diagram_type", "d2E")
-                backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 6)
+                backend.addValue("x_elastic_strain_diagram_type", "d2e")
+                backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 6)
                 backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit6)
-                backend.addValue("x_elastic_strain_diagram_eta_values", d2E6_eta)
-                backend.addValue("x_elastic_strain_diagram_values", d2E6_val)
+                backend.addValue("x_elastic_strain_diagram_eta_values", d2e6_eta)
+                backend.addValue("x_elastic_strain_diagram_values", d2e6_val)
                 backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
 
             elif meth == 'Stress':
@@ -803,7 +803,7 @@ class SampleContext(object):
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 1)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 1)
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit1Cross)
                     backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal1_eta[i])
                     backend.addValue("x_elastic_strain_diagram_values", CrossVal1_val[i])
@@ -812,7 +812,7 @@ class SampleContext(object):
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 3)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 3)
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit3Cross)
                     backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal3_eta[i])
                     backend.addValue("x_elastic_strain_diagram_values", CrossVal3_val[i])
@@ -821,7 +821,7 @@ class SampleContext(object):
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "cross-validation")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 5)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 5)
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit5Cross)
                     backend.addValue("x_elastic_strain_diagram_eta_values", CrossVal5_eta[i])
                     backend.addValue("x_elastic_strain_diagram_values", CrossVal5_val[i])
@@ -829,7 +829,7 @@ class SampleContext(object):
 
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "dtn")
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 1)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 1)
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit1)
                     backend.addValue("x_elastic_strain_diagram_eta_values", dS1_eta[i])
@@ -838,7 +838,7 @@ class SampleContext(object):
 
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "dtn")
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 3)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 3)
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit3)
                     backend.addValue("x_elastic_strain_diagram_eta_values", dS3_eta[i])
@@ -847,7 +847,7 @@ class SampleContext(object):
 
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "dtn")
-                    backend.addValue("x_elastic_strain_diagram_polinomial_fit_order", 5)
+                    backend.addValue("x_elastic_strain_diagram_polynomial_fit_order", 5)
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
                     backend.addValue("x_elastic_strain_diagram_number_of_eta", polFit5)
                     backend.addValue("x_elastic_strain_diagram_eta_values", dS5_eta[i])
@@ -879,7 +879,7 @@ class SampleContext(object):
             if meth == "Energy":
                 elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
                 backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
-                backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+                backend.addValue("x_elastic_fitting_parameters_polynomial_order", self.fitEC)
                 backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
             else:
                 pass
@@ -1387,7 +1387,7 @@ class SampleContext(object):
             if meth == "Energy":
                 elasticPIndex = backend.openSection("x_elastic_section_fitting_parameters")
                 backend.addValue("x_elastic_fitting_parameters_eta", self.etaEC)
-                backend.addValue("x_elastic_fitting_parameters_polinomial_order", self.fitEC)
+                backend.addValue("x_elastic_fitting_parameters_polynomial_order", self.fitEC)
                 backend.closeSection("x_elastic_section_fitting_parameters", elasticPIndex)
             else:
                 pass
