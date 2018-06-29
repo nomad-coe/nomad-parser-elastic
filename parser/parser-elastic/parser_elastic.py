@@ -365,7 +365,7 @@ class SampleContext(object):
                 d2e_eta_tot.append([])
                 if (i<10):
                     if ordr == 2:
-                        Dstna = 'Dst0'+ str(i) + '_d2e.dat'
+                        Dstna = 'Dst0'+ str(i) + '_d2E.dat'
                         Dstnb = 'Dst0'+ str(i) + '_ddE.dat'
                     elif ordr == 3:
                         Dstna = 'Dst0'+ str(i) + '_d3E.dat'
@@ -404,7 +404,7 @@ class SampleContext(object):
                        pass
                 else:
                     if ordr == 2:
-                        Dstna = 'Dst' + str(i) + '_d2e.dat'
+                        Dstna = 'Dst' + str(i) + '_d2E.dat'
                         Dstnb = 'Dst' + str(i) + '_ddE.dat'
                     elif ordr == 3:
                         Dstna = 'Dst'+ str(i) + '_d3E.dat'
