@@ -91,6 +91,8 @@ class SampleContext(object):
                     cachingLevelForMetaName = elastic_parser_input_wien2k.get_cachingLevelForMetaName(self.metaInfoEnv, CachingLevel.PreOpenedIgnore),
                     superContext = structSuperContext)
 
+            # ESPRESSO INPUT FILE TO BE ADDED
+
                 with open(inputFile) as fIn:
                     structParser.parseFile(fIn)
 
