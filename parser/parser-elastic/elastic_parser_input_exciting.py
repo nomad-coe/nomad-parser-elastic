@@ -77,6 +77,4 @@ class InputHandler(xml.sax.handler.ContentHandler):
 
 def parseInput(inF, backend):
     handler = InputHandler(backend)
-    logging.error("will parse")
     xml.sax.parse(inF, handler)
-    logging.error("did parse")

@@ -97,7 +97,7 @@ def buildStructureMatchers():
     sections = ["section_run", "section_system"],
     subMatchers = [
         SM(name = 'systemName',
-           startReStr = r"(?P<x_elastic_wien2k_system_nameIn>.*)"),
+           startReStr = r"(?P<x_elastic_wien2k_system_namein>.*)"),
         SM(r"\w+\s*LATTICE,NONEQUIV\.ATOMS.\s*(?P<x_elastic_wien2k_nonequiv_atoms>[0-9]+)"),
         SM(r"(?P<x_elastic_wien2k_calc_mode>.*)"),
        # SM(r"\s*(?P<x_wien2k_unit_cell_param_a>[-+0-9.eEdD]+)\s*(?P<x_wien2k_unit_cell_param_b>[-+0-9.eEdD]+)\s*(?P<x_wien2k_unit_cell_param_c>[-+0-9.eEdD]+)\s*(?P<x_wien2k_angle_between_unit_axis_alfa>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_beta>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_gamma>[-+0-9.eEdD]+)"),
@@ -110,7 +110,7 @@ def buildStructureMatchers():
                   repeats=True
               ),
     #           SM(r"\s*(?P<atom>.{10})\s*NPT=\s*(?P<NPT>[0-9]+)\s*R0=(?P<r0>[0-9.]+)\s*RMT=\s*(?P<rmt>[0-9.]+)\s*Z:\s*(?P<z>[0-9.]+)",)
-               SM(r"\s*(?P<x_elastic_wien2k_atom_name>^.+)\s*NPT=\s*(?P<x_elastic_wien2k_NPT>[0-9]+)\s*R0=(?P<x_elastic_wien2k_R0>[0-9.]+)\s*RMT=\s*(?P<x_elastic_wien2k_RMT>[0-9.]+)\s*Z:\s*(?P<x_elastic_wien2k_atomic_number_Z>[0-9.]+)",)
+               SM(r"\s*(?P<x_elastic_wien2k_atom_name>^.+)\s*NPT=\s*(?P<x_elastic_wien2k_npt>[0-9]+)\s*R0=(?P<x_elastic_wien2k_r0>[0-9.]+)\s*RMT=\s*(?P<x_elastic_wien2k_rmt>[0-9.]+)\s*Z:\s*(?P<x_elastic_wien2k_atomic_number_z>[0-9.]+)",)
            ]
        )
     ])
@@ -131,7 +131,7 @@ def get_cachingLevelForMetaName(metaInfoEnv, CachingLvl):
                                'section_run': CachingLvl,
                                'section_system': CachingLvl
                               }
-    cachingLevelForMetaName["x_elastic_wien2k_system_nameIn"] = CachingLevel.ForwardAndCache
+    cachingLevelForMetaName["x_elastic_wien2k_system_namein"] = CachingLevel.ForwardAndCache
     cachingLevelForMetaName["x_elastic_wien2k_section_equiv_atoms"] = CachingLevel.ForwardAndCache
     cachingLevelForMetaName["atom_labels"] = CachingLevel.ForwardAndCache
     return cachingLevelForMetaName
