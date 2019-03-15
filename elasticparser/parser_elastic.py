@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from builtins import object
-import setup_paths
 import numpy as np
 from nomadcore.unit_conversion.unit_conversion import convert_unit
 from nomadcore.parser_backend import JsonParseEventsWriterBackend
@@ -21,7 +20,10 @@ from nomadcore.simple_parser import mainFunction, AncillaryParser, CachingLevel
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 from nomadcore.unit_conversion import unit_conversion
-import os, sys, json, elastic_parser_input_exciting, elastic_parser_input_wien2k
+import os, sys, json
+import logging
+import elasticparser.elastic_parser_input_exciting as elastic_parser_input_exciting
+import elasticparser.elastic_parser_input_wien2k as elastic_parser_input_wien2k
 from ase import Atoms
 #from pathlib import Path
 
@@ -34,7 +36,7 @@ def is_number(s):
 
 class SampleContext(object):
 
-    def __init__(self): 
+    def __init__(self):
 #        self.mainFileUri = sys.argv[1]  #exciting !!!!!!LOCAL HOME!!!!!!!!             OKOKOKOK
         self.mainFileUri = sys.argv[2]  #exciting !!! FOR NOMAD URI nmd:// or sbt -> zip file!!!!!!!!   OKOKKOOK
         self.parser = None
@@ -63,7 +65,7 @@ class SampleContext(object):
         if self.secMethodIndex is None:
             self.secMethodIndex = gIndex
 
-    def onClose_section_run(self, backend, gIndex, section):        
+    def onClose_section_run(self, backend, gIndex, section):
         backend.addValue('program_name', 'elastic')
         backend.addValue('program_version', '1.0')
 
@@ -72,8 +74,8 @@ class SampleContext(object):
         self.SGN = int(section["x_elastic_space_group_number"][0])
         mainFile = self.parser.fIn.fIn.name
         dirPath = os.path.dirname(mainFile)           #####exciting sbt -> zip file####     YES ?????????? sure???? check first    OKOKOKKO
-        self.mainFile = self.parser.fIn.name             
-        self.mainFilePath = self.mainFile[0:-12]   
+        self.mainFile = self.parser.fIn.name
+        self.mainFilePath = self.mainFile[0:-12]
 #        dirPath = self.mainFileUri[0:-12]   #####exciting LOCAL HOME or from NOMAD URI nmd://  #######   YES                      OKOKOKOK
         for files in os.listdir(dirPath):
             if files[-3:] == "xml":
@@ -123,7 +125,7 @@ class SampleContext(object):
                                 posX.append(float(s[1]))
                                 posY.append(float(s[2]))
                                 posZ.append(float(s[3]))
-                            elif len(s) == 3 and s[1] != "=": 
+                            elif len(s) == 3 and s[1] != "=":
                                 if is_number(s[0]):
                                     lattice.append([fromB(alat*float(s[0])),fromB(alat*float(s[1])),fromB(alat*float(s[2]))])
                                 else:
@@ -140,14 +142,14 @@ class SampleContext(object):
                         coord = atoms.get_positions()
                         backend.addArrayValues('atom_positions', np.asarray(coord))
                         backend.addArrayValues('atom_labels', np.asarray(atom_labels))
-                        backend.addValue("simulation_cell", cell) 
+                        backend.addValue("simulation_cell", cell)
 
     def onClose_section_method(self, backend, gIndex, section):
         ha_per_joule = convert_unit(1, "hartree", "J")
         giga = 10**9
         elCode = section['x_elastic_code']
         elasticGIndex = backend.openSection("section_single_configuration_calculation")
-        self.mainFilePath = self.mainFileUri[0:-12]  
+        self.mainFilePath = self.mainFileUri[0:-12]
         questa = os.getcwd()
         mdr = float(section['x_elastic_max_lagrangian_strain'][0])
         ordr = int(section['x_elastic_elastic_constant_order'][0])
@@ -244,7 +246,7 @@ class SampleContext(object):
                 physStress_dummy.append([])
 
             os.chdir(Dstn)
-            cur_dir = os.getcwd() 
+            cur_dir = os.getcwd()
 
             if elCode[0] == 'exciting':
                 try:
@@ -272,7 +274,7 @@ class SampleContext(object):
                 except:
                    pass
 
-            elif elCode[0] == 'WIEN': 
+            elif elCode[0] == 'WIEN':
                 f = open(Dstn+'_Energy.dat', 'r')
                 while 1:
                    s = f.readline()
@@ -302,7 +304,7 @@ class SampleContext(object):
                    s = s.strip()
                    s = s.split()
                    if is_number(s[0]):
-                       dummy_eta = s[0] 
+                       dummy_eta = s[0]
                        dummy_LS1 = s[1]
                        dummy_LS2 = s[2]
                        dummy_LS3 = s[3]
@@ -311,7 +313,7 @@ class SampleContext(object):
                        dummy_LS6 = s[6]
                        eta[-1].append(float(dummy_eta))
                        LagrStress_dummy[-1].append([float(dummy_LS1),float(dummy_LS2),float(dummy_LS3),float(dummy_LS4),float(dummy_LS5),float(dummy_LS6)])
-     
+
                 g = open(Dstn+'_Physical-stress.dat', 'r')
                 while 1:
                    s = g.readline()
@@ -519,7 +521,7 @@ class SampleContext(object):
             for i in range(6):
                 string.append('Dstn'+str(i+1))
                 stringCV.append('DstnCV'+str(i+1))
-            
+
             for Dstn in string:
                 j = string.index(Dstn)
                 for i in range(1, ECs+1):
@@ -784,7 +786,7 @@ class SampleContext(object):
                         for i in range(len(LagrStress_dummy[j])):
                             LagrStress[k][j].append(LagrStress_dummy[j][i][k])
                             physStress[k][j].append(physStress_dummy[j][i][k])
-                 
+
                 for i in range(0,6):
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "Lagrangian-stress")
@@ -793,7 +795,7 @@ class SampleContext(object):
                     backend.addValue("x_elastic_strain_diagram_eta_values", eta)
                     backend.addValue("x_elastic_strain_diagram_values", LagrStress[i])
                     backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
-                
+
                     elasticSIndex = backend.openSection("x_elastic_section_strain_diagrams")
                     backend.addValue("x_elastic_strain_diagram_type", "Physical-stress")
                     backend.addValue("x_elastic_strain_diagram_stress_Voigt_component", int(i+1))
@@ -855,7 +857,7 @@ class SampleContext(object):
                     backend.addValue("x_elastic_strain_diagram_eta_values", dS5_eta[i])
                     backend.addValue("x_elastic_strain_diagram_values", dS5_val[i])
                     backend.closeSection("x_elastic_section_strain_diagrams", elasticSIndex)
-                
+
             else:
                 pass
 
@@ -946,13 +948,13 @@ class SampleContext(object):
                 LC = 'RI'
                 ECs= 14
 
-                A = C111-C222+C112                                     
-                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112   
-                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112 
-                D = float(1/2)*(C113-C123)      
-                E = float(1/2)*(C155-C144)         
-                F = float(1/2)*(C114+float(3)*C124)   
-                G =-C114-float(2)*C124           
+                A = C111-C222+C112
+                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112
+                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112
+                D = float(1/2)*(C113-C123)
+                E = float(1/2)*(C155-C144)
+                F = float(1/2)*(C114+float(3)*C124)
+                G =-C114-float(2)*C124
                 H = float(1/2)*(C114-C124)
 
                 ECmat[0][0][0] = C111
@@ -1073,10 +1075,10 @@ class SampleContext(object):
                 LC = 'HII'
                 ECs= 12
 
-                A = C111-C222+C112                
-                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112   
-                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112     
-                D = float(1/2)*(C113-C123)          
+                A = C111-C222+C112
+                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112
+                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112
+                D = float(1/2)*(C113-C123)
                 E = float(1/2)*(C155-C144)
 
                 ECmat[0][0][0] = C111
@@ -1164,10 +1166,10 @@ class SampleContext(object):
                 LC = 'HI'
                 ECs= 10
 
-                A = C111-C222+C112         
-                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112   
-                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112   
-                D = float(1/2)*(C113-C123)   
+                A = C111-C222+C112
+                B = float(3/4)*C222-float(1/2)*C111-float(1/4)*C112
+                C = float(1/2)*C111-float(1/4)*C222-float(1/4)*C112
+                D = float(1/2)*(C113-C123)
                 E = float(1/2)*(C155-C144)
 
                 ECmat[0][0][0] = C111
@@ -1311,22 +1313,22 @@ class SampleContext(object):
                 ECs=  6
 
                 ECmat[0][0][0] = C111
-                ECmat[0][0][1] = C112 
-                ECmat[0][0][2] = C112 
+                ECmat[0][0][1] = C112
+                ECmat[0][0][2] = C112
                 ECmat[0][1][0] = C112
                 ECmat[0][1][1] = C112
                 ECmat[0][1][2] = C113
-                ECmat[0][2][0] = C112     
-                ECmat[0][2][1] = C123     
-                ECmat[0][2][2] = C112    
-                ECmat[0][3][3] = C144    
-                ECmat[0][4][4] = C155    
+                ECmat[0][2][0] = C112
+                ECmat[0][2][1] = C123
+                ECmat[0][2][2] = C112
+                ECmat[0][3][3] = C144
+                ECmat[0][4][4] = C155
                 ECmat[0][5][5] = C155
 
                 ECmat[1][0][0] = C112
                 ECmat[1][0][1] = C112
                 ECmat[1][0][2] = C123
-                ECmat[1][1][0] = C112            
+                ECmat[1][1][0] = C112
                 ECmat[1][1][1] = C111
                 ECmat[1][1][2] = C112
                 ECmat[1][2][0] = C123
@@ -1366,7 +1368,7 @@ class SampleContext(object):
                 ECmat[4][4][1] = C144
                 ECmat[4][4][2] = C155
                 ECmat[4][5][3] = C456
-    
+
                 ECmat[5][0][5] = C155
                 ECmat[5][1][5] = C155
                 ECmat[5][2][5] = C144
@@ -1430,8 +1432,34 @@ parserInfo = {
   "version": "1.0"
 }
 
-metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../../nomad-meta-info/meta_info/nomad_meta_info/elastic.nomadmetainfo.json"))
+# metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../../nomad-meta-info/meta_info/nomad_meta_info/elastic.nomadmetainfo.json"))
+# metaInfoEnv, warnings = loadJsonFile(filePath = metaInfoPath, dependencyLoader = None, extraArgsHandling = InfoKindEl.ADD_EXTRA_ARGS, uri = None)
+
+import nomad_meta_info
+metaInfoPath = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(nomad_meta_info.__file__)), "elastic.nomadmetainfo.json"))
 metaInfoEnv, warnings = loadJsonFile(filePath = metaInfoPath, dependencyLoader = None, extraArgsHandling = InfoKindEl.ADD_EXTRA_ARGS, uri = None)
+
+class ElasticParser():
+   """ A proper class envolop for running this parser from within python. """
+   def __init__(self, backend, **kwargs):
+       self.backend_factory = backend
+
+   def parse(self, mainfile):
+       from unittest.mock import patch
+       logging.info('elastic parser started')
+       logging.getLogger('nomadcore').setLevel(logging.WARNING)
+       backend = self.backend_factory(metaInfoEnv)
+       with patch.object(sys, 'argv', ['<exe>', '--uri', 'nmd://uri', mainfile]):
+           mainFunction(
+               mainFileDescription,
+               metaInfoEnv,
+               parserInfo,
+               superContext=SampleContext(),
+               superBackend=backend)
+
+       return backend
+
 
 if __name__ == "__main__":
     superContext = SampleContext()
