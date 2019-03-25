@@ -99,13 +99,13 @@ def buildStructureMatchers():
            startReStr = r"(?P<x_elastic_wien2k_system_nameIn>.*)"),
         SM(r"\w+\s*LATTICE,NONEQUIV\.ATOMS.\s*(?P<x_elastic_wien2k_nonequiv_atoms>[0-9]+)"),
         SM(r"(?P<x_elastic_wien2k_calc_mode>.*)"),
-       # SM(r"\s*(?P<x_wien2k_unit_cell_param_a>[-+0-9.eEdD]+)\s*(?P<x_wien2k_unit_cell_param_b>[-+0-9.eEdD]+)\s*(?P<x_wien2k_unit_cell_param_c>[-+0-9.eEdD]+)\s*(?P<x_wien2k_angle_between_unit_axis_alfa>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_beta>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_gamma>[-+0-9.eEdD]+)"),
+       # SM(r"\s*(?P<x_wien2k_unit_cell_param_a>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<x_wien2k_unit_cell_param_b>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<x_wien2k_unit_cell_param_c>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<x_wien2k_angle_between_unit_axis_alfa>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_beta>[-+0-9.eEdD]{9})\s*(?P<x_wien2k_angle_between_unit_axis_gamma>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)"),
         SM(r"\s*(?P<x_elastic_wien2k_unit_cell_param_a__angstrom>[-+0-9]*\.\d{0,6}){0,10}\s*(?P<x_elastic_wien2k_unit_cell_param_b__angstrom>[-+0-9]*\.\d{0,6}){0,10}\s*(?P<x_elastic_wien2k_unit_cell_param_c__angstrom>[-+0-9]*\.\d{0,6}){0,10}\s*(?P<x_elastic_wien2k_angle_between_unit_axis_alfa>[-+]?[0-9]*\.\d{0,6}){0,10}\s*(?P<x_elastic_wien2k_angle_between_unit_axis_beta>[-+]?[0-9]*\.\d{0,6}){0,10}\s*(?P<x_elastic_wien2k_angle_between_unit_axis_gamma>[-+]?[0-9]*\.\d*)"),
-        SM(r"\s*ATOM\s*[-0-9]+:\s*X=(?P<x_elastic_wien2k_atom_pos_x__angstrom>[-+0-9.eEdD]+)\s*Y=(?P<x_elastic_wien2k_atom_pos_y__angstrom>[-+0-9.eEdD]+)\s*Z=(?P<x_elastic_wien2k_atom_pos_z__angstrom>[-+0-9.eEdD]+)",
+        SM(r"\s*ATOM\s*[-0-9]+:\s*X=(?P<x_elastic_wien2k_atom_pos_x__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*Y=(?P<x_elastic_wien2k_atom_pos_y__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*Z=(?P<x_elastic_wien2k_atom_pos_z__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)",
            repeats=True,
            sections=["x_elastic_wien2k_section_equiv_atoms"],
            subMatchers=[
-               SM(r"\s*[-0-9]+:\s*X=(?P<x_elastic_wien2k_atom_pos_x__angstrom>[-+0-9.eEdD]+)\s*Y=(?P<x_elastic_wien2k_atom_pos_y__angstrom>[-+0-9.eEdD]+)\s*Z=(?P<x_elastic_wien2k_atom_pos_z__angstrom>[-+0-9.eEdD]+)",
+               SM(r"\s*[-0-9]+:\s*X=(?P<x_elastic_wien2k_atom_pos_x__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*Y=(?P<x_elastic_wien2k_atom_pos_y__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*Z=(?P<x_elastic_wien2k_atom_pos_z__angstrom>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)",
                   repeats=True
               ),
     #           SM(r"\s*(?P<atom>.{10})\s*NPT=\s*(?P<NPT>[0-9]+)\s*R0=(?P<r0>[0-9.]+)\s*RMT=\s*(?P<rmt>[0-9.]+)\s*Z:\s*(?P<z>[0-9.]+)",)
