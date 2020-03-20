@@ -15,7 +15,6 @@
 from builtins import object
 import numpy as np
 from nomadcore.unit_conversion.unit_conversion import convert_unit
-from nomadcore.parser_backend import JsonParseEventsWriterBackend
 from nomadcore.simple_parser import mainFunction, AncillaryParser, CachingLevel
 from nomadcore.simple_parser import SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
@@ -1432,13 +1431,6 @@ parserInfo = {
   "version": "1.0"
 }
 
-# metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../../nomad-meta-info/meta_info/nomad_meta_info/elastic.nomadmetainfo.json"))
-# metaInfoEnv, warnings = loadJsonFile(filePath = metaInfoPath, dependencyLoader = None, extraArgsHandling = InfoKindEl.ADD_EXTRA_ARGS, uri = None)
-
-import nomad_meta_info
-metaInfoPath = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(nomad_meta_info.__file__)), "elastic.nomadmetainfo.json"))
-metaInfoEnv, warnings = loadJsonFile(filePath = metaInfoPath, dependencyLoader = None, extraArgsHandling = InfoKindEl.ADD_EXTRA_ARGS, uri = None)
 
 class ElasticParser():
    """ A proper class envolop for running this parser from within python. """
@@ -1449,18 +1441,13 @@ class ElasticParser():
        from unittest.mock import patch
        logging.info('elastic parser started')
        logging.getLogger('nomadcore').setLevel(logging.WARNING)
-       backend = self.backend_factory(metaInfoEnv)
+       backend = self.backend_factory("elastic.nomadmetainfo.json")
        with patch.object(sys, 'argv', ['<exe>', '--uri', 'nmd://uri', mainfile]):
            mainFunction(
                mainFileDescription,
-               metaInfoEnv,
+               None,
                parserInfo,
                superContext=SampleContext(),
                superBackend=backend)
 
        return backend
-
-
-if __name__ == "__main__":
-    superContext = SampleContext()
-    mainFunction(mainFileDescription, metaInfoEnv, parserInfo, superContext = superContext)
