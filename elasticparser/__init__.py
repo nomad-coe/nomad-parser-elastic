@@ -12,4 +12,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from elasticparser.parser_elastic import ElasticParser
+from .metainfo import m_env
+from nomad.parsing.parser import FairdiParser
+from elasticparser.elastic_parser import ElasticParserInterface
+
+
+class ElasticParser(FairdiParser):
+    def __init__(self):
+        super().__init__(
+            name='parsers/elastic', code_name='elastic', code_homepage='http://exciting-code.org/elastic',
+            mainfile_contents_re=r'\s*Order of elastic constants\s*=\s*[0-9]+\s*',
+            mainfile_name_re=(r'.*/INFO_ElaStic'))
+
+    def parse(self, filepath, archive, logger=None):
+        self._metainfo_env = m_env
+
+        parser = ElasticParserInterface(filepath, archive, logger)
+
+        parser.parse()
