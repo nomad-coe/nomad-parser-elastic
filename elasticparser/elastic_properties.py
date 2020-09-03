@@ -32,7 +32,7 @@ class ElasticProperties:
                 Quantity('calculation_method', r'\s*Method of calculation\s*=\s*([-a-zA-Z]+)\s*'),
                 Quantity('code_name', r'\s*DFT code name\s*=\s*([-a-zA-Z]+)'),
                 Quantity('space_group_number', r'\s*Space-group number\s*=\s*([0-9]+)'),
-                Quantity('equilibrium_volume', r'\s*Volume of equilibrium unit cell\s*=\s*([-0-9.]+)\s*\[a.u\^3\]'),
+                Quantity('equilibrium_volume', r'\s*Volume of equilibrium unit cell\s*=\s*([0-9.]+)\s*'),
                 Quantity('max_strain', r'\s*Maximum Lagrangian strain\s*=\s*([0-9.]+)'),
                 Quantity('n_strains', r'\s*Number of distorted structures\s*=\s*([0-9]+)')
             ]
@@ -243,8 +243,9 @@ class ElasticProperties:
     def get_input(self):
         paths = os.listdir(self.maindir)
         path = None
+        order = self.info['order']
         for p in paths:
-            if 'ElaStic_' in p and p.endswith('.in'):
+            if 'ElaStic_' in p and p.endswith('.in') and str(order) in p:
                 path = p
                 break
 
@@ -296,13 +297,13 @@ class ElasticProperties:
 
         quantities = [
             Quantity(
-                'voigt', r'Symmetry of the second-order elastic constant matrix in Voigt notation.\s*[\s\S]+\n\n([C\d\s\n]+)\n',
+                'voigt', r'Symmetry[\s\S]+\n\s*\n([C\d\s\n]+)\n',
                 str_operation=reshape, dtype=str),
             Quantity(
-                'elastic_constant', r'Elastic constant \(stiffness\) matrix in GPa:\s*\n\n([\-\d\.\s\n]+)\n',
+                'elastic_constant', r'Elastic constant[\s\S]+in GPa\s*:\s*\n\n([\-\d\.\s\n]+)\n',
                 str_operation=reshape, dtype=float),
             Quantity(
-                'compliance', r'Elastic compliance matrix in 1/GPa:\s*\n\n([\-\d\.\s\n]+)\n',
+                'compliance', r'Elastic compliance[\s\S]+in 1/GPa\s*:\s*\n\n([\-\d\.\s\n]+)\n',
                 str_operation=reshape, dtype=float)]
 
         modulus_names = [
