@@ -1,0 +1,7 @@
+codeLabel: ElaStic
+codeLabelStyle: 'capitals: E, S. This is part of the exciting project'
+codeUrl: http://exciting-code.org/elastic
+parserDirName: dependencies/parsers/elastic/
+parserGitUrl: https://gitlab.mpcdf.mpg.de/nomad-lab/parser-elastic
+parserSpecific: ''
+tableOfFiles: ''
