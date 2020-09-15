@@ -30,6 +30,10 @@ class ElasticParserInterface:
 
         if method == 'energy':
             strain, energy = self.properties.get_strain_energy()
+            if not strain:
+                self.logger.warn('Error getting strain and energy data')
+                return
+
             n_strains = self.properties.info['n_strains']
 
             sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
@@ -45,6 +49,10 @@ class ElasticParserInterface:
                 '5th': poly_fit_2 - 2, '6th': poly_fit_2 - 2, '7th': poly_fit_2 - 3}
 
             energy_fit = self.properties.get_energy_fit()
+            if not energy_fit:
+                self.logger.warn('Error getting energy fit data')
+                return
+
             for diagram_type in ['cross-validation', 'd2e']:
                 for fit_order in energy_fit[diagram_type][0].keys():
                     sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
@@ -73,6 +81,9 @@ class ElasticParserInterface:
 
             stress_fit = self.properties.get_stress_fit()
             for diagram_type in ['cross-validation', 'dtn']:
+                if stress_fit.get(diagram_type, None) is None:
+                    continue
+
                 for si in range(6):
                     for fit_order in stress_fit[diagram_type][si][0].keys():
                         sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)

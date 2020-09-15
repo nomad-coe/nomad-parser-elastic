@@ -297,7 +297,7 @@ class ElasticProperties:
 
         quantities = [
             Quantity(
-                'voigt', r'Symmetry[\s\S]+\n\s*\n([C\d\s\n]+)\n',
+                'voigt', r'Symmetry[\s\S]+\n\s*\n([C\d\s\n\(\)\-\+\/\*]+)\n',
                 str_operation=reshape, dtype=str),
             Quantity(
                 'elastic_constant', r'Elastic constant[\s\S]+in GPa\s*:\s*\n\n([\-\d\.\s\n]+)\n',
