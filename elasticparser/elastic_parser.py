@@ -183,6 +183,6 @@ class ElasticParserInterface:
         sec_workflow = self.archive.m_create(Workflow)
         sec_workflow.workflow_type = 'elastic'
         sec_elastic = sec_workflow.m_create(Elastic)
-        sec_elastic.elastic_calculation_method = self.properties.info['calculation_method']
+        sec_elastic.elastic_calculation_method = self.properties.info['calculation_method'].lower()
         sec_elastic.elastic_constants_order = self.properties.info['order']
         sec_elastic.strain_maximum = self.properties.info['max_strain']
