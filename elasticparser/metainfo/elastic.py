@@ -330,6 +330,7 @@ class section_system(public.section_system):
     x_elastic_unit_cell_volume = Quantity(
         type=np.dtype(np.float64),
         shape=[],
+        unit='m ** 3',
         description='''
         Volume of the equilibrium unit cell
         ''',

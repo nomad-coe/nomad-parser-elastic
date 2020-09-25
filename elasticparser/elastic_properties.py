@@ -1,4 +1,5 @@
 import os
+import pint
 import numpy as np
 from ase import Atoms
 
@@ -32,7 +33,7 @@ class ElasticProperties:
                 Quantity('calculation_method', r'\s*Method of calculation\s*=\s*([-a-zA-Z]+)\s*'),
                 Quantity('code_name', r'\s*DFT code name\s*=\s*([-a-zA-Z]+)'),
                 Quantity('space_group_number', r'\s*Space-group number\s*=\s*([0-9]+)'),
-                Quantity('equilibrium_volume', r'\s*Volume of equilibrium unit cell\s*=\s*([0-9.]+)\s*'),
+                Quantity('equilibrium_volume', r'\s*Volume of equilibrium unit cell\s*=\s*([0-9.]+)\s*', unit='angstrom ** 3'),
                 Quantity('max_strain', r'\s*Maximum Lagrangian strain\s*=\s*([0-9.]+)'),
                 Quantity('n_strains', r'\s*Number of distorted structures\s*=\s*([0-9]+)')
             ]
@@ -107,7 +108,12 @@ class ElasticProperties:
 
         structure = Atoms(cell=cellpar, scaled_positions=pos, symbols=sym, pbc=True)
 
-        return sym, structure.get_positions(), list(structure.get_cell())
+        positions = structure.get_positions()
+        positions = pint.Quantity(positions, 'angstrom')
+        cell = structure.get_cell()
+        cell = pint.Quantity(cell, 'angstrom')
+
+        return sym, positions, cell
 
     def get_strain_energy(self):
         strains, energies = [], []
@@ -121,6 +127,11 @@ class ElasticProperties:
             data = np.loadtxt(path).T
             strains.append(data[0])
             energies.append(data[1])
+
+        energies = pint.Quantity(energies, 'hartree')
+        # the peculiarity of the x_elastic_strain_diagram_values metainfo that it does
+        # not have the energy unit
+        energies = energies.to('J').magnitude
 
         return strains, energies
 
@@ -206,7 +217,7 @@ class ElasticProperties:
         eta = {key: val for key, val in eta.items() if val}
         val = {key: val for key, val in val.items() if val}
 
-        return eta, val
+        return [eta, val]
 
     def get_energy_fit(self):
         energy_fit = dict()
@@ -216,10 +227,14 @@ class ElasticProperties:
             if result is None:
                 continue
 
+            result[1] = {
+                key: pint.Quantity(val, 'GPa').to('Pa').magnitude for key, val in result[1].items()}
             energy_fit['d2e'] = result
 
         result = self._get_fit('Energy-vs-Strain', 'CVe.dat')
         if result is not None:
+            result[1] = {
+                key: pint.Quantity(val, 'hartree').to('J').magnitude for key, val in result[1].items()}
             energy_fit['cross-validation'] = result
 
         return energy_fit
@@ -232,10 +247,12 @@ class ElasticProperties:
         for strain_index in range(1, 7):
             result = self._get_fit('Stress-vs-Strain', '%d_dS.dat' % strain_index)
             if result is not None:
+                result[1] = {key: pint.Quantity(val, 'GPa') for key, val in result[1].items()}
                 stress_fit['dtn'][strain_index - 1] = result
 
             result = self._get_fit('Stress-vs-Strain', '%d_CVe.dat' % strain_index)
             if result is not None:
+                result[1] = {key: pint.Quantity(val, 'hartree') for key, val in result[1].items()}
                 stress_fit['cross-validation'][strain_index - 1] = result
 
         return stress_fit
@@ -301,21 +318,25 @@ class ElasticProperties:
                 str_operation=reshape, dtype=str),
             Quantity(
                 'elastic_constant', r'Elastic constant[\s\S]+in GPa\s*:\s*\n\n([\-\d\.\s\n]+)\n',
-                str_operation=reshape, dtype=float),
+                str_operation=reshape, dtype=float, unit='GPa'),
             Quantity(
                 'compliance', r'Elastic compliance[\s\S]+in 1/GPa\s*:\s*\n\n([\-\d\.\s\n]+)\n',
-                str_operation=reshape, dtype=float)]
+                str_operation=reshape, dtype=float, unit='1/GPa')]
 
         modulus_names = [
             'B_V', 'K_V', 'G_V', 'B_R', 'K_R', 'G_R', 'B_H', 'K_H', 'G_H', 'E_V',
             'nu_V', 'E_R', 'nu_R', 'E_H', 'nu_H', 'AVR']
 
-        quantities += [
-            Quantity(name, r'%s\s*=\s*([-+\d+\.]+)\s*' % name) for name in modulus_names]
+        for name in modulus_names:
+            unit = None
+            if name[0:2] in ('B_', 'K_', 'G_', 'E_'):
+                unit = 'GPa'
+            quantities.append(
+                Quantity(name, r'%s\s*=\s*([-+\d+\.]+)\s*' % name, unit=unit))
 
         quantities += [
             Quantity(
-                'eigenvalues', r'Eigenvalues of elastic constant \(stiffness\) matrix:\s*\n+([\-\d\.\n\s]+)\n')]
+                'eigenvalues', r'Eigenvalues of elastic constant \(stiffness\) matrix:\s*\n+([\-\d\.\n\s]+)\n', unit='GPa')]
 
         parser = UnstructuredTextFileParser(path, quantities)
 

@@ -2,7 +2,6 @@ import os
 import numpy as np
 import logging
 
-from nomadcore.unit_conversion import unit_conversion
 from nomad.datamodel.metainfo.public import section_run, section_system,\
     section_single_configuration_calculation, section_method, section_calculation_to_calculation_refs,\
     Workflow, Elastic
@@ -11,10 +10,6 @@ from elasticparser.metainfo.elastic import x_elastic_section_strain_diagrams,\
     x_elastic_section_fitting_parameters
 
 from elasticparser.elastic_properties import ElasticProperties
-
-a_to_m = unit_conversion.convert_unit_function('angstrom', 'meter')
-ha_to_J = unit_conversion.convert_unit(1, 'hartree', 'J')
-giga = 10 ** 9
 
 
 class ElasticParserInterface:
@@ -40,7 +35,7 @@ class ElasticParserInterface:
             sec_strain_diagram.x_elastic_strain_diagram_type = 'energy'
             sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = len(strain[0])
             sec_strain_diagram.x_elastic_strain_diagram_eta_values = strain
-            sec_strain_diagram.x_elastic_strain_diagram_values = np.array(energy) * ha_to_J
+            sec_strain_diagram.x_elastic_strain_diagram_values = energy
 
             poly_fit_2 = int((n_strains - 1) / 2)
 
@@ -60,8 +55,7 @@ class ElasticParserInterface:
                     sec_strain_diagram.x_elastic_strain_diagram_polynomial_fit_order = int(fit_order[:-2])
                     sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
                     sec_strain_diagram.x_elastic_strain_diagram_eta_values = energy_fit[diagram_type][0][fit_order]
-                    convert = giga if diagram_type == 'd2e' else ha_to_J
-                    sec_strain_diagram.x_elastic_strain_diagram_values = np.array(energy_fit[diagram_type][1][fit_order]) * convert
+                    sec_strain_diagram.x_elastic_strain_diagram_values = energy_fit[diagram_type][1][fit_order]
 
         elif method == 'stress':
             strain, stress = self.properties.get_strain_stress()
@@ -92,8 +86,7 @@ class ElasticParserInterface:
                         sec_strain_diagram.x_elastic_strain_diagram_polynomial_fit_order = int(fit_order[:-2])
                         sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
                         sec_strain_diagram.x_elastic_strain_diagram_eta_values = stress_fit[diagram_type][si][0][fit_order]
-                        convert = giga if diagram_type == 'dtn' else ha_to_J
-                        sec_strain_diagram.x_elastic_strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order]) * convert
+                        sec_strain_diagram.x_elastic_strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
 
     def parse_elastic_constant(self):
         sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
@@ -104,26 +97,26 @@ class ElasticParserInterface:
             matrices, moduli, eigenvalues = self.properties.get_elastic_constants_order2()
 
             sec_scc.x_elastic_2nd_order_constants_notation_matrix = matrices['voigt']
-            sec_scc.x_elastic_2nd_order_constants_matrix = matrices['elastic_constant'] * giga
-            sec_scc.x_elastic_2nd_order_constants_compliance_matrix = matrices['compliance'] / giga
+            sec_scc.x_elastic_2nd_order_constants_matrix = matrices['elastic_constant']
+            sec_scc.x_elastic_2nd_order_constants_compliance_matrix = matrices['compliance']
 
-            sec_scc.x_elastic_Voigt_bulk_modulus = moduli.get('B_V', moduli.get('K_V')) * giga
-            sec_scc.x_elastic_Voigt_shear_modulus = moduli['G_V'] * giga
+            sec_scc.x_elastic_Voigt_bulk_modulus = moduli.get('B_V', moduli.get('K_V'))
+            sec_scc.x_elastic_Voigt_shear_modulus = moduli['G_V']
 
-            sec_scc.x_elastic_Reuss_bulk_modulus = moduli.get('B_R', moduli.get('K_R')) * giga
-            sec_scc.x_elastic_Reuss_shear_modulus = moduli['G_R'] * giga
+            sec_scc.x_elastic_Reuss_bulk_modulus = moduli.get('B_R', moduli.get('K_R'))
+            sec_scc.x_elastic_Reuss_shear_modulus = moduli['G_R']
 
-            sec_scc.x_elastic_Hill_bulk_modulus = moduli.get('B_H', moduli.get('K_H')) * giga
-            sec_scc.x_elastic_Hill_shear_modulus = moduli['G_H'] * giga
+            sec_scc.x_elastic_Hill_bulk_modulus = moduli.get('B_H', moduli.get('K_H'))
+            sec_scc.x_elastic_Hill_shear_modulus = moduli['G_H']
 
-            sec_scc.x_elastic_Voigt_Young_modulus = moduli['E_V'] * giga
+            sec_scc.x_elastic_Voigt_Young_modulus = moduli['E_V']
             sec_scc.x_elastic_Voigt_Poisson_ratio = moduli['nu_V']
-            sec_scc.x_elastic_Reuss_Young_modulus = moduli['E_R'] * giga
+            sec_scc.x_elastic_Reuss_Young_modulus = moduli['E_R']
             sec_scc.x_elastic_Reuss_Poisson_ratio = moduli['nu_R']
-            sec_scc.x_elastic_Hill_Young_modulus = moduli['E_H'] * giga
+            sec_scc.x_elastic_Hill_Young_modulus = moduli['E_H']
             sec_scc.x_elastic_Hill_Poisson_ratio = moduli['nu_H']
 
-            sec_scc.x_elastic_eigenvalues = eigenvalues * giga
+            sec_scc.x_elastic_eigenvalues = eigenvalues
 
         elif order == 3:
             elastic_constant = self.properties.get_elastic_constants_order3()
@@ -141,11 +134,10 @@ class ElasticParserInterface:
 
         symbols, positions, cell = self.properties.get_structure_info()
         volume = self.properties.info['equilibrium_volume']
-        volume = a_to_m(a_to_m(a_to_m(volume)))
 
         sec_system.atom_labels = symbols
-        sec_system.atom_positions = a_to_m(positions)
-        sec_system.simulation_cell = a_to_m(cell)
+        sec_system.atom_positions = positions
+        sec_system.simulation_cell = cell
         sec_system.configuration_periodic_dimensions = [True, True, True]
         sec_system.x_elastic_space_group_number = self.properties.info['space_group_number']
         sec_system.x_elastic_unit_cell_volume = volume
