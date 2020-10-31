@@ -3,7 +3,7 @@ import pint
 import numpy as np
 from ase import Atoms
 
-from nomad.parsing.text_parser import Quantity, UnstructuredTextFileParser
+from nomad.parsing.file_parser import Quantity, UnstructuredTextFileParser
 
 
 class ElasticProperties:
