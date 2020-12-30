@@ -2,22 +2,26 @@ import os
 import numpy as np
 import logging
 
-from nomad.datamodel.metainfo.public import section_run, section_system,\
-    section_single_configuration_calculation, section_method, section_calculation_to_calculation_refs,\
-    Workflow, Elastic
+from nomad.datamodel.metainfo.common_dft import Run, System, SingleConfigurationCalculation,\
+    Method, CalculationToCalculationRefs, Workflow, Elastic
+from nomad.parsing.parser import FairdiParser
 
 from elasticparser.metainfo.elastic import x_elastic_section_strain_diagrams,\
     x_elastic_section_fitting_parameters
 
 from elasticparser.elastic_properties import ElasticProperties
+from .metainfo import m_env
 
 
-class ElasticParserInterface:
-    def __init__(self, filepath, archive, logger=None):
-        self.filepath = os.path.abspath(filepath)
-        self.archive = archive
-        self.logger = logger if logger is not None else logging
-        self.properties = ElasticProperties(self.filepath)
+class ElasticParser(FairdiParser):
+    def __init__(self):
+        super().__init__(
+            name='parsers/elastic', code_name='elastic', code_homepage='http://exciting-code.org/elastic',
+            mainfile_contents_re=r'\s*Order of elastic constants\s*=\s*[0-9]+\s*',
+            mainfile_name_re=(r'.*/INFO_ElaStic'))
+
+        self._metainfo_env = m_env
+        self.properties = ElasticProperties()
 
     def parse_strain(self):
         sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
@@ -95,7 +99,6 @@ class ElasticParserInterface:
 
         if order == 2:
             matrices, moduli, eigenvalues = self.properties.get_elastic_constants_order2()
-
             sec_scc.x_elastic_2nd_order_constants_notation_matrix = matrices['voigt']
             sec_scc.x_elastic_2nd_order_constants_matrix = matrices['elastic_constant']
             sec_scc.x_elastic_2nd_order_constants_compliance_matrix = matrices['compliance']
@@ -123,14 +126,23 @@ class ElasticParserInterface:
 
             sec_scc.x_elastic_3rd_order_constants_matrix = elastic_constant
 
-    def parse(self):
+    def _init_parsers(self):
+        self.properties.mainfile = self.filepath
+        self.properties.logger = self.logger
 
-        sec_run = self.archive.m_create(section_run)
+    def parse(self, filepath, archive, logger):
+        self.filepath = os.path.abspath(filepath)
+        self.archive = archive
+        self.logger = logger if logger is not None else logging
+
+        self._init_parsers()
+
+        sec_run = self.archive.m_create(Run)
 
         sec_run.program_name = 'elastic'
         sec_run.program_version = '1.0'
 
-        sec_system = sec_run.m_create(section_system)
+        sec_system = sec_run.m_create(System)
 
         symbols, positions, cell = self.properties.get_structure_info()
         volume = self.properties.info['equilibrium_volume']
@@ -142,7 +154,7 @@ class ElasticParserInterface:
         sec_system.x_elastic_space_group_number = self.properties.info['space_group_number']
         sec_system.x_elastic_unit_cell_volume = volume
 
-        sec_method = sec_run.m_create(section_method)
+        sec_method = sec_run.m_create(Method)
         sec_method.x_elastic_elastic_constant_order = self.properties.info['order']
         sec_method.x_elastic_calculation_method = self.properties.info['calculation_method']
         sec_method.x_elastic_code = self.properties.info['code_name']
@@ -154,9 +166,9 @@ class ElasticParserInterface:
         sec_method.x_elastic_number_of_deformations = len(self.properties.deformation_dirs)
 
         references = self.properties.get_references_to_calculations()
-        sec_scc = sec_run.m_create(section_single_configuration_calculation)
+        sec_scc = sec_run.m_create(SingleConfigurationCalculation)
         for reference in references:
-            sec_calc_ref = sec_scc.m_create(section_calculation_to_calculation_refs)
+            sec_calc_ref = sec_scc.m_create(CalculationToCalculationRefs)
             sec_calc_ref.calculation_to_calculation_external_url = reference
             sec_calc_ref.calculation_to_calculation_kind = 'source_calculation'
 
