@@ -572,7 +572,7 @@ class ElasticParserInterface:
         self.info.mainfile = self.filepath
 
     def reuse_parser(self, parser):
-        self.info.quantities = parser.quantities
+        self.info.quantities = parser.info.quantities
         self.structure.quantities = parser.structure.quantities
         self.distorted_parameters.quantities = parser.distorted_parameters.quantities
         self.fit.quantities = parser.fit.quantities
