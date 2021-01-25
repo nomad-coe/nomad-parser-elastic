@@ -148,8 +148,13 @@ class ElasticConstant3Parser(TextParser):
                 'cijk', r'(C\d\d\d)\s*=\s*([\-\d\.]+)\s*GPa', repeats=True, convert=False)]
 
 
-class ElasticParserInterface:
+class ElasticParser(FairdiParser):
     def __init__(self):
+        super().__init__(
+            name='parsers/elastic', code_name='elastic', code_homepage='http://exciting-code.org/elastic',
+            mainfile_contents_re=r'\s*Order of elastic constants\s*=\s*[0-9]+\s*',
+            mainfile_name_re=(r'.*/INFO_ElaStic'))
+        self._metainfo_env = m_env
         self._mainfile = None
         self.logger = None
         self._deform_dirs = None
@@ -639,24 +644,3 @@ class ElasticParserInterface:
         sec_elastic.elastic_calculation_method = self.info['calculation_method'].lower()
         sec_elastic.elastic_constants_order = self.info['order']
         sec_elastic.strain_maximum = self.info['max_strain']
-
-
-class ElasticParser(FairdiParser):
-    def __init__(self):
-        super().__init__(
-            name='parsers/elastic', code_name='elastic', code_homepage='http://exciting-code.org/elastic',
-            mainfile_contents_re=r'\s*Order of elastic constants\s*=\s*[0-9]+\s*',
-            mainfile_name_re=(r'.*/INFO_ElaStic'))
-
-        self._metainfo_env = m_env
-        self.parser = None
-
-    def parse(self, filepath, archive, logger):
-        parser = ElasticParserInterface()
-
-        if self.parser is not None:
-            parser.reuse_parser(self.parser)
-        else:
-            self.parser = parser
-
-        parser.parse(filepath, archive, logger)
