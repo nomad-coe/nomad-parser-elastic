@@ -575,6 +575,12 @@ class ElasticParser(FairdiParser):
         self._deform_dirs = None
         self.maindir = os.path.dirname(self.filepath)
         self.info.mainfile = self.filepath
+        self.info.logger = self.logger
+        self.structure.logger = self.logger
+        self.distorted_parameters.logger = self.logger
+        self.fit.logger = self.logger
+        self.elastic_constant_2.logger = self.logger
+        self.elastic_constant_3.logger = self.logger
 
     def reuse_parser(self, parser):
         self.info.quantities = parser.info.quantities
