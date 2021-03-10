@@ -510,9 +510,9 @@ class ElasticParser(FairdiParser):
             strain, stress = self.get_strain_stress()
             for diagram_type in ['Lagrangian-stress', 'Physical-stress']:
                 strain_i = strain[diagram_type]
-                stress_i = np.transpose(np.array(stress[diagram_type]), axes=(2, 0, 1))
                 if not strain_i:
                     continue
+                stress_i = np.transpose(np.array(stress[diagram_type]), axes=(2, 0, 1))
 
                 for si in range(6):
                     sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
@@ -604,12 +604,13 @@ class ElasticParser(FairdiParser):
 
         sec_system = sec_run.m_create(System)
 
-        symbols, positions, cell = self.get_structure_info()
+        symbols_positions_cell = self.get_structure_info()
         volume = self.info['equilibrium_volume']
 
-        sec_system.atom_labels = symbols
-        sec_system.atom_positions = positions
-        sec_system.simulation_cell = cell
+        if symbols_positions_cell is not None:
+            sec_system.atom_labels = symbols_positions_cell[0]
+            sec_system.atom_positions = symbols_positions_cell[1]
+            sec_system.simulation_cell = symbols_positions_cell[2]
         sec_system.configuration_periodic_dimensions = [True, True, True]
         sec_system.x_elastic_space_group_number = self.info['space_group_number']
         sec_system.x_elastic_unit_cell_volume = volume
@@ -633,9 +634,10 @@ class ElasticParser(FairdiParser):
             sec_calc_ref.calculation_to_calculation_kind = 'source_calculation'
 
         fit_input = self.get_input()
-        sec_fit_par = sec_method.m_create(x_elastic_section_fitting_parameters)
-        sec_fit_par.x_elastic_fitting_parameters_eta = fit_input[0]
-        sec_fit_par.x_elastic_fitting_parameters_polynomial_order = fit_input[1]
+        if fit_input is not None:
+            sec_fit_par = sec_method.m_create(x_elastic_section_fitting_parameters)
+            sec_fit_par.x_elastic_fitting_parameters_eta = fit_input[0]
+            sec_fit_par.x_elastic_fitting_parameters_polynomial_order = fit_input[1]
 
         self.parse_strain()
 
