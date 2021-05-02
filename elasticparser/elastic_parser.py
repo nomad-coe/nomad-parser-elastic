@@ -587,7 +587,7 @@ class ElasticParser(FairdiParser):
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
 
-            sec_scc.x_elastic_3rd_order_constants_matrix = elastic_constant
+            sec_scc.x_elastic_3rd_order_constants_matrix = pint.Quantity(elastic_constant, 'GPa')
 
     def init_parser(self):
         self._deform_dirs = None
@@ -629,6 +629,7 @@ class ElasticParser(FairdiParser):
             sec_system.atom_labels = symbols_positions_cell[0]
             sec_system.atom_positions = symbols_positions_cell[1]
             sec_system.simulation_cell = symbols_positions_cell[2]
+            sec_system.lattice_vectors = symbols_positions_cell[2]
         sec_system.configuration_periodic_dimensions = [True, True, True]
         sec_system.x_elastic_space_group_number = self.info['space_group_number']
         sec_system.x_elastic_unit_cell_volume = volume
