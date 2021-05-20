@@ -19,9 +19,9 @@
 import os
 import numpy as np
 import logging
-import pint
 from ase import Atoms
 
+from nomad.units import ureg
 from nomad.parsing.parser import FairdiParser
 from nomad.parsing.file_parser import Quantity, TextParser
 from nomad.datamodel.metainfo.common_dft import Run, System, SingleConfigurationCalculation,\
@@ -129,7 +129,7 @@ class ElasticConstant2Parser(TextParser):
             key = val_in[0]
             unit = val_in[-1] if len(val_in) == 3 else None
             val = float(val_in[1])
-            val = pint.Quantity(val, unit) if unit is not None else val
+            val = val * ureg.GPa if unit is not None else val
             return key, val
 
         self._quantities.append(Quantity(
@@ -235,9 +235,9 @@ class ElasticParser(FairdiParser):
         structure = Atoms(cell=cellpar, scaled_positions=pos, symbols=sym, pbc=True)
 
         positions = structure.get_positions()
-        positions = pint.Quantity(positions, 'angstrom')
+        positions = positions * ureg.angstrom
         cell = structure.get_cell()
-        cell = pint.Quantity(cell, 'angstrom')
+        cell = cell * ureg.angstrom
 
         return sym, positions, cell
 
@@ -254,7 +254,7 @@ class ElasticParser(FairdiParser):
             strains.append(list(data[0]))
             # the peculiarity of the x_elastic_strain_diagram_values metainfo that it does
             # not have the energy unit
-            energies.append(list(pint.Quantity(data[1], 'hartree').to('J').magnitude))
+            energies.append((data[1] * ureg.hartree).to('J').magnitude)
 
         return strains, energies
 
@@ -327,16 +327,14 @@ class ElasticParser(FairdiParser):
 
             result = list(result)
             result[1] = {
-                key: pint.Quantity(
-                    val, 'GPa').to('Pa').magnitude for key, val in result[1].items()}
+                key: (val * ureg.GPa).to('Pa').magnitude for key, val in result[1].items()}
             energy_fit['d2e'] = result
 
         result = self._get_fit('Energy-vs-Strain', 'CVe.dat')
         if result is not None:
             result = list(result)
             result[1] = {
-                key: pint.Quantity(
-                    val, 'hartree').to('J').magnitude for key, val in result[1].items()}
+                key: (val * ureg.hartree).to('J').magnitude for key, val in result[1].items()}
             energy_fit['cross-validation'] = result
 
         return energy_fit
@@ -349,12 +347,12 @@ class ElasticParser(FairdiParser):
         for strain_index in range(1, 7):
             result = self._get_fit('Stress-vs-Strain', '%d_dS.dat' % strain_index)
             if result is not None:
-                result[1] = {key: pint.Quantity(val, 'GPa') for key, val in result[1].items()}
+                result[1] = {key: val * ureg.GPa for key, val in result[1].items()}
                 stress_fit['dtn'][strain_index - 1] = result
 
             result = self._get_fit('Stress-vs-Strain', '%d_CVe.dat' % strain_index)
             if result is not None:
-                result[1] = {key: pint.Quantity(val, 'hartree') for key, val in result[1].items()}
+                result[1] = {key: val * ureg.hartree for key, val in result[1].items()}
                 stress_fit['cross-validation'][strain_index - 1] = result
 
         return stress_fit
@@ -490,25 +488,23 @@ class ElasticParser(FairdiParser):
         sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
         method = self.info['calculation_method'].lower()
 
+        n_strains = self.info['n_strains']
+        poly_fit_2 = int((n_strains - 1) / 2)
+        poly_fit = {
+            '2nd': poly_fit_2, '3rd': poly_fit_2 - 1, '4th': poly_fit_2 - 1,
+            '5th': poly_fit_2 - 2, '6th': poly_fit_2 - 2, '7th': poly_fit_2 - 3}
+
         if method == 'energy':
             strain, energy = self.get_strain_energy()
             if not strain:
                 self.logger.warn('Error getting strain and energy data')
                 return
 
-            n_strains = self.info['n_strains']
-
             sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
             sec_strain_diagram.x_elastic_strain_diagram_type = 'energy'
             sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = len(strain[0])
             sec_strain_diagram.x_elastic_strain_diagram_eta_values = strain
             sec_strain_diagram.x_elastic_strain_diagram_values = energy
-
-            poly_fit_2 = int((n_strains - 1) / 2)
-
-            poly_fit = {
-                '2nd': poly_fit_2, '3rd': poly_fit_2 - 1, '4th': poly_fit_2 - 1,
-                '5th': poly_fit_2 - 2, '6th': poly_fit_2 - 2, '7th': poly_fit_2 - 3}
 
             energy_fit = self.get_energy_fit()
             if not energy_fit:
@@ -587,7 +583,7 @@ class ElasticParser(FairdiParser):
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
 
-            sec_scc.x_elastic_3rd_order_constants_matrix = pint.Quantity(elastic_constant, 'GPa')
+            sec_scc.x_elastic_3rd_order_constants_matrix = elastic_constant * ureg.GPa
 
     def init_parser(self):
         self._deform_dirs = None
