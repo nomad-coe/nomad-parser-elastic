@@ -111,62 +111,62 @@ class section_method(public.section_method):
 
     m_def = Section(validate=False, extends_base_section=True, a_legacy=LegacyDefinition(name='section_method'))
 
-    x_elastic_elastic_constant_order = Quantity(
-        type=np.dtype(np.int32),
-        shape=[],
-        description='''
-        Order of the elastic constant
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_elastic_constant_order'))
+#     x_elastic_elastic_constant_order = Quantity(
+#         type=np.dtype(np.int32),
+#         shape=[],
+#         description='''
+#         Order of the elastic constant
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_elastic_constant_order'))
 
-    x_elastic_number_of_deformations = Quantity(
-        type=np.dtype(np.int32),
-        shape=[],
-        description='''
-        number of deformed structures equally spaced in strain, which are generated
-        between the maximum negative strain and the maximum positive one
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_number_of_deformations'))
+#     x_elastic_number_of_deformations = Quantity(
+#         type=np.dtype(np.int32),
+#         shape=[],
+#         description='''
+#         number of deformed structures equally spaced in strain, which are generated
+#         between the maximum negative strain and the maximum positive one
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_number_of_deformations'))
 
-    x_elastic_deformation_types = Quantity(
-        type=np.dtype('U'),
-        shape=['x_elastic_number_of_deformations', 6],
-        description='''
-        deformation types
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_deformation_types'))
+#     x_elastic_deformation_types = Quantity(
+#         type=np.dtype('U'),
+#         shape=['x_elastic_number_of_deformations', 6],
+#         description='''
+#         deformation types
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_deformation_types'))
 
-    x_elastic_calculation_method = Quantity(
-        type=str,
-        shape=[],
-        description='''
-        Method of calculation
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_calculation_method'))
+#     x_elastic_calculation_method = Quantity(
+#         type=str,
+#         shape=[],
+#         description='''
+#         Method of calculation
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_calculation_method'))
 
-    x_elastic_code = Quantity(
-        type=str,
-        shape=[],
-        description='''
-        Code used for the calculation of the elastic constants
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_code'))
+#     x_elastic_code = Quantity(
+#         type=str,
+#         shape=[],
+#         description='''
+#         Code used for the calculation of the elastic constants
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_code'))
 
-    x_elastic_max_lagrangian_strain = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        description='''
-        Maximum lagrangian strain used to calculate the elastic constants
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_max_lagrangian_strain'))
+#     x_elastic_max_lagrangian_strain = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         description='''
+#         Maximum lagrangian strain used to calculate the elastic constants
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_max_lagrangian_strain'))
 
-    x_elastic_number_of_distorted_structures = Quantity(
-        type=np.dtype(np.int32),
-        shape=[],
-        description='''
-        Number of distorted structures used to calculate the elastic constants
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_number_of_distorted_structures'))
+#     x_elastic_number_of_distorted_structures = Quantity(
+#         type=np.dtype(np.int32),
+#         shape=[],
+#         description='''
+#         Number of distorted structures used to calculate the elastic constants
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_number_of_distorted_structures'))
 
     x_elastic_section_fitting_parameters = SubSection(
         sub_section=SectionProxy('x_elastic_section_fitting_parameters'),
@@ -174,163 +174,163 @@ class section_method(public.section_method):
         a_legacy=LegacyDefinition(name='x_elastic_section_fitting_parameters'))
 
 
-class section_single_configuration_calculation(public.section_single_configuration_calculation):
+# class section_single_configuration_calculation(public.section_single_configuration_calculation):
 
-    m_def = Section(validate=False, extends_base_section=True, a_legacy=LegacyDefinition(name='section_single_configuration_calculation'))
+#     m_def = Section(validate=False, extends_base_section=True, a_legacy=LegacyDefinition(name='section_single_configuration_calculation'))
 
-    x_elastic_2nd_order_constants_notation_matrix = Quantity(
-        type=np.dtype('U'),
-        shape=[6, 6],
-        description='''
-        Symmetry of the second-order elastic constant matrix in Voigt notation
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_notation_matrix'))
+#     x_elastic_2nd_order_constants_notation_matrix = Quantity(
+#         type=np.dtype('U'),
+#         shape=[6, 6],
+#         description='''
+#         Symmetry of the second-order elastic constant matrix in Voigt notation
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_notation_matrix'))
 
-    x_elastic_2nd_order_constants_matrix = Quantity(
-        type=np.dtype(np.float64),
-        shape=[6, 6],
-        unit='pascal',
-        description='''
-        2nd order elastic constant (stiffness) matrix in GPa
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_matrix'))
+#     x_elastic_2nd_order_constants_matrix = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[6, 6],
+#         unit='pascal',
+#         description='''
+#         2nd order elastic constant (stiffness) matrix in GPa
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_matrix'))
 
-    x_elastic_3rd_order_constants_matrix = Quantity(
-        type=np.dtype(np.float64),
-        shape=[6, 6, 6],
-        unit='pascal',
-        description='''
-        3rd order elastic constant (stiffness) matrix in GPa
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_3rd_order_constants_matrix'))
+#     x_elastic_3rd_order_constants_matrix = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[6, 6, 6],
+#         unit='pascal',
+#         description='''
+#         3rd order elastic constant (stiffness) matrix in GPa
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_3rd_order_constants_matrix'))
 
-    x_elastic_2nd_order_constants_compliance_matrix = Quantity(
-        type=np.dtype(np.float64),
-        shape=[6, 6],
-        unit='1 / pascal',
-        description='''
-        Elastic compliance matrix in 1/GPa
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_compliance_matrix'))
+#     x_elastic_2nd_order_constants_compliance_matrix = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[6, 6],
+#         unit='1 / pascal',
+#         description='''
+#         Elastic compliance matrix in 1/GPa
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_2nd_order_constants_compliance_matrix'))
 
-    x_elastic_Voigt_bulk_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Voigt bulk modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Voigt_bulk_modulus'))
+#     x_elastic_Voigt_bulk_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Voigt bulk modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Voigt_bulk_modulus'))
 
-    x_elastic_Voigt_shear_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Voigt shear modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Voigt_shear_modulus'))
+#     x_elastic_Voigt_shear_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Voigt shear modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Voigt_shear_modulus'))
 
-    x_elastic_Reuss_bulk_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Reuss bulk modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Reuss_bulk_modulus'))
+#     x_elastic_Reuss_bulk_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Reuss bulk modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Reuss_bulk_modulus'))
 
-    x_elastic_Reuss_shear_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Reuss shear modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Reuss_shear_modulus'))
+#     x_elastic_Reuss_shear_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Reuss shear modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Reuss_shear_modulus'))
 
-    x_elastic_Hill_bulk_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Hill bulk modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Hill_bulk_modulus'))
+#     x_elastic_Hill_bulk_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Hill bulk modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Hill_bulk_modulus'))
 
-    x_elastic_Hill_shear_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Hill shear modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Hill_shear_modulus'))
+#     x_elastic_Hill_shear_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Hill shear modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Hill_shear_modulus'))
 
-    x_elastic_Voigt_Young_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Voigt Young modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Voigt_Young_modulus'))
+#     x_elastic_Voigt_Young_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Voigt Young modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Voigt_Young_modulus'))
 
-    x_elastic_Voigt_Poisson_ratio = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        description='''
-        Voigt Poisson ratio
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Voigt_Poisson_ratio'))
+#     x_elastic_Voigt_Poisson_ratio = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         description='''
+#         Voigt Poisson ratio
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Voigt_Poisson_ratio'))
 
-    x_elastic_Reuss_Young_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Reuss Young modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Reuss_Young_modulus'))
+#     x_elastic_Reuss_Young_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Reuss Young modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Reuss_Young_modulus'))
 
-    x_elastic_Reuss_Poisson_ratio = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        description='''
-        Reuss Poisson ratio
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Reuss_Poisson_ratio'))
+#     x_elastic_Reuss_Poisson_ratio = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         description='''
+#         Reuss Poisson ratio
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Reuss_Poisson_ratio'))
 
-    x_elastic_Hill_Young_modulus = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        unit='pascal',
-        description='''
-        Hill Young modulus
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Hill_Young_modulus'))
+#     x_elastic_Hill_Young_modulus = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         unit='pascal',
+#         description='''
+#         Hill Young modulus
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Hill_Young_modulus'))
 
-    x_elastic_Hill_Poisson_ratio = Quantity(
-        type=np.dtype(np.float64),
-        shape=[],
-        description='''
-        Hill Poisson ratio
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_Hill_Poisson_ratio'))
+#     x_elastic_Hill_Poisson_ratio = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[],
+#         description='''
+#         Hill Poisson ratio
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_Hill_Poisson_ratio'))
 
-    x_elastic_eigenvalues = Quantity(
-        type=np.dtype(np.float64),
-        shape=[6],
-        unit='pascal',
-        description='''
-        Eigemvalues of the stiffness matrix
-        ''',
-        a_legacy=LegacyDefinition(name='x_elastic_eigenvalues'))
+#     x_elastic_eigenvalues = Quantity(
+#         type=np.dtype(np.float64),
+#         shape=[6],
+#         unit='pascal',
+#         description='''
+#         Eigemvalues of the stiffness matrix
+#         ''',
+#         a_legacy=LegacyDefinition(name='x_elastic_eigenvalues'))
 
-    x_elastic_section_strain_diagrams = SubSection(
-        sub_section=SectionProxy('x_elastic_section_strain_diagrams'),
-        repeats=True,
-        a_legacy=LegacyDefinition(name='x_elastic_section_strain_diagrams'))
+#     x_elastic_section_strain_diagrams = SubSection(
+#         sub_section=SectionProxy('x_elastic_section_strain_diagrams'),
+#         repeats=True,
+#         a_legacy=LegacyDefinition(name='x_elastic_section_strain_diagrams'))
 
 
 class section_system(public.section_system):

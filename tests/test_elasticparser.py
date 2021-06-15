@@ -49,31 +49,31 @@ def test_2nd(parser):
     assert sec_fit_parameters.x_elastic_fitting_parameters_eta[0] == 0.05
 
     sec_scc = archive.section_run[0].section_single_configuration_calculation[0]
-    sec_strain = sec_scc.x_elastic_section_strain_diagrams
+    sec_strain = sec_scc.section_strain_diagrams
     assert len(sec_strain) == 7
-    assert sec_strain[0].x_elastic_strain_diagram_eta_values[1][3] == -0.02
-    assert sec_strain[0].x_elastic_strain_diagram_values[2][5] == approx(-3.30877062e-16)
-    assert sec_strain[3].x_elastic_strain_diagram_type == 'cross-validation'
-    assert sec_strain[2].x_elastic_strain_diagram_eta_values[1][2] == 0.03
-    assert sec_strain[6].x_elastic_strain_diagram_values[2][4] == approx(6.8708895e+12)
-    assert sec_strain[4].x_elastic_strain_diagram_polynomial_fit_order == 6
+    assert sec_strain[0].strain_diagram_eta_values[1][3] == -0.02
+    assert sec_strain[0].strain_diagram_values[2][5] == approx(-3.30877062e-16)
+    assert sec_strain[3].strain_diagram_type == 'cross-validation'
+    assert sec_strain[2].strain_diagram_eta_values[1][2] == 0.03
+    assert sec_strain[6].strain_diagram_values[2][4] == approx(6.8708895e+12)
+    assert sec_strain[4].strain_diagram_polynomial_fit_order == 6
 
-    assert sec_scc.x_elastic_2nd_order_constants_notation_matrix[1][2] == 'C12'
-    assert sec_scc.x_elastic_2nd_order_constants_matrix[0][2].magnitude == approx(1.008e+11)
-    assert sec_scc.x_elastic_2nd_order_constants_compliance_matrix[3][3].magnitude == approx(1.75e-12)
-    assert sec_scc.x_elastic_Voigt_bulk_modulus.magnitude == approx(4.4937e+11)
-    assert sec_scc.x_elastic_Voigt_shear_modulus.magnitude == approx(5.3074e+11)
-    assert sec_scc.x_elastic_Reuss_bulk_modulus.magnitude == approx(4.4937e+11)
-    assert sec_scc.x_elastic_Reuss_shear_modulus.magnitude == approx(5.2574e+11)
-    assert sec_scc.x_elastic_Hill_bulk_modulus.magnitude == approx(4.4937e+11)
-    assert sec_scc.x_elastic_Hill_shear_modulus.magnitude == approx(5.2824e+11)
-    assert sec_scc.x_elastic_Voigt_Young_modulus.magnitude == approx(1.14245e+12)
-    assert sec_scc.x_elastic_Voigt_Poisson_ratio == 0.08
-    assert sec_scc.x_elastic_Reuss_Young_modulus.magnitude == approx(1.1347e+12)
-    assert sec_scc.x_elastic_Reuss_Poisson_ratio == 0.08
-    assert sec_scc.x_elastic_Hill_Young_modulus.magnitude == approx(1.13858e+12)
-    assert sec_scc.x_elastic_Hill_Poisson_ratio == 0.08
-    assert sec_scc.x_elastic_eigenvalues[1].magnitude == approx(1.3481e+12)
+    assert sec_scc.second_order_constants_notation_matrix[1][2] == 'C12'
+    assert sec_scc.second_order_constants_matrix[0][2].magnitude == approx(1.008e+11)
+    assert sec_scc.second_order_constants_compliance_matrix[3][3].magnitude == approx(1.75e-12)
+    assert sec_scc.Voigt_bulk_modulus.magnitude == approx(4.4937e+11)
+    assert sec_scc.Voigt_shear_modulus.magnitude == approx(5.3074e+11)
+    assert sec_scc.Reuss_bulk_modulus.magnitude == approx(4.4937e+11)
+    assert sec_scc.Reuss_shear_modulus.magnitude == approx(5.2574e+11)
+    assert sec_scc.Hill_bulk_modulus.magnitude == approx(4.4937e+11)
+    assert sec_scc.Hill_shear_modulus.magnitude == approx(5.2824e+11)
+    assert sec_scc.Voigt_Young_modulus.magnitude == approx(1.14245e+12)
+    assert sec_scc.Voigt_Poisson_ratio == 0.08
+    assert sec_scc.Reuss_Young_modulus.magnitude == approx(1.1347e+12)
+    assert sec_scc.Reuss_Poisson_ratio == 0.08
+    assert sec_scc.Hill_Young_modulus.magnitude == approx(1.13858e+12)
+    assert sec_scc.Hill_Poisson_ratio == 0.08
+    assert sec_scc.elastic_eigenvalues[1].magnitude == approx(1.3481e+12)
 
     assert len(sec_scc.section_calculation_to_calculation_refs) == 33
 
@@ -83,15 +83,15 @@ def test_3rd(parser):
     parser.parse('tests/data/3rd/INFO_ElaStic', archive, None)
 
     sec_scc = archive.section_run[0].section_single_configuration_calculation[0]
-    sec_strain = sec_scc.x_elastic_section_strain_diagrams
+    sec_strain = sec_scc.section_strain_diagrams
     assert len(sec_strain) == 7
-    assert len(sec_strain[1].x_elastic_strain_diagram_eta_values) == 10
-    assert sec_strain[2].x_elastic_strain_diagram_eta_values[1][3] == 0.07
-    assert sec_strain[3].x_elastic_strain_diagram_values[8][7] == approx(2.06899957e-23)
+    assert len(sec_strain[1].strain_diagram_eta_values) == 10
+    assert sec_strain[2].strain_diagram_eta_values[1][3] == 0.07
+    assert sec_strain[3].strain_diagram_values[8][7] == approx(2.06899957e-23)
 
-    assert sec_scc.x_elastic_3rd_order_constants_matrix[3][1][3].magnitude == approx(1.274e+10)
-    assert sec_scc.x_elastic_3rd_order_constants_matrix[5][2][5].magnitude == approx(1.2825e+10)
-    assert sec_scc.x_elastic_3rd_order_constants_matrix[0][0][1].magnitude == approx(-1.18334e+12)
+    assert sec_scc.third_order_constants_matrix[3][1][3].magnitude == approx(1.274e+10)
+    assert sec_scc.third_order_constants_matrix[5][2][5].magnitude == approx(1.2825e+10)
+    assert sec_scc.third_order_constants_matrix[0][0][1].magnitude == approx(-1.18334e+12)
 
 
 def test_stress(parser):

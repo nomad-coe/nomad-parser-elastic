@@ -25,10 +25,9 @@ from nomad.units import ureg
 from nomad.parsing.parser import FairdiParser
 from nomad.parsing.file_parser import Quantity, TextParser
 from nomad.datamodel.metainfo.common_dft import Run, System, SingleConfigurationCalculation,\
-    Method, CalculationToCalculationRefs, Workflow, Elastic
+    Method, CalculationToCalculationRefs, Workflow, Elastic, StrainDiagrams
 
-from elasticparser.metainfo.elastic import x_elastic_section_strain_diagrams,\
-    x_elastic_section_fitting_parameters
+from elasticparser.metainfo.elastic import x_elastic_section_fitting_parameters
 
 from .metainfo import m_env
 
@@ -500,11 +499,11 @@ class ElasticParser(FairdiParser):
                 self.logger.warn('Error getting strain and energy data')
                 return
 
-            sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
-            sec_strain_diagram.x_elastic_strain_diagram_type = 'energy'
-            sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = len(strain[0])
-            sec_strain_diagram.x_elastic_strain_diagram_eta_values = strain
-            sec_strain_diagram.x_elastic_strain_diagram_values = energy
+            sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+            sec_strain_diagram.strain_diagram_type = 'energy'
+            sec_strain_diagram.strain_diagram_number_of_eta = len(strain[0])
+            sec_strain_diagram.strain_diagram_eta_values = strain
+            sec_strain_diagram.strain_diagram_values = energy
 
             energy_fit = self.get_energy_fit()
             if not energy_fit:
@@ -513,12 +512,12 @@ class ElasticParser(FairdiParser):
 
             for diagram_type in ['cross-validation', 'd2e']:
                 for fit_order in energy_fit[diagram_type][0].keys():
-                    sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
-                    sec_strain_diagram.x_elastic_strain_diagram_type = diagram_type
-                    sec_strain_diagram.x_elastic_strain_diagram_polynomial_fit_order = int(fit_order[:-2])
-                    sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
-                    sec_strain_diagram.x_elastic_strain_diagram_eta_values = energy_fit[diagram_type][0][fit_order]
-                    sec_strain_diagram.x_elastic_strain_diagram_values = energy_fit[diagram_type][1][fit_order]
+                    sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                    sec_strain_diagram.strain_diagram_type = diagram_type
+                    sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
+                    sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
+                    sec_strain_diagram.strain_diagram_eta_values = energy_fit[diagram_type][0][fit_order]
+                    sec_strain_diagram.strain_diagram_values = energy_fit[diagram_type][1][fit_order]
 
         elif method == 'stress':
             strain, stress = self.get_strain_stress()
@@ -529,12 +528,12 @@ class ElasticParser(FairdiParser):
                 stress_i = np.transpose(np.array(stress[diagram_type]), axes=(2, 0, 1))
 
                 for si in range(6):
-                    sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
-                    sec_strain_diagram.x_elastic_strain_diagram_type = diagram_type
-                    sec_strain_diagram.x_elastic_strain_diagram_stress_Voigt_component = si + 1
-                    sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = len(strain_i[0])
-                    sec_strain_diagram.x_elastic_strain_diagram_eta_values = strain_i
-                    sec_strain_diagram.x_elastic_strain_diagram_values = stress_i[si]
+                    sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                    sec_strain_diagram.strain_diagram_type = diagram_type
+                    sec_strain_diagram.strain_diagram_stress_Voigt_component = si + 1
+                    sec_strain_diagram.strain_diagram_number_of_eta = len(strain_i[0])
+                    sec_strain_diagram.strain_diagram_eta_values = strain_i
+                    sec_strain_diagram.strain_diagram_values = stress_i[si]
 
             stress_fit = self.get_stress_fit()
             for diagram_type in ['cross-validation', 'dtn']:
@@ -543,13 +542,13 @@ class ElasticParser(FairdiParser):
 
                 for si in range(6):
                     for fit_order in stress_fit[diagram_type][si][0].keys():
-                        sec_strain_diagram = sec_scc.m_create(x_elastic_section_strain_diagrams)
-                        sec_strain_diagram.x_elastic_strain_diagram_type = diagram_type
-                        sec_strain_diagram.x_elastic_strain_diagram_stress_Voigt_component = si + 1
-                        sec_strain_diagram.x_elastic_strain_diagram_polynomial_fit_order = int(fit_order[:-2])
-                        sec_strain_diagram.x_elastic_strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
-                        sec_strain_diagram.x_elastic_strain_diagram_eta_values = stress_fit[diagram_type][si][0][fit_order]
-                        sec_strain_diagram.x_elastic_strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
+                        sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                        sec_strain_diagram.strain_diagram_type = diagram_type
+                        sec_strain_diagram.strain_diagram_stress_Voigt_component = si + 1
+                        sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
+                        sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
+                        sec_strain_diagram.strain_diagram_eta_values = stress_fit[diagram_type][si][0][fit_order]
+                        sec_strain_diagram.strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
 
     def parse_elastic_constant(self):
         sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
@@ -558,32 +557,32 @@ class ElasticParser(FairdiParser):
 
         if order == 2:
             matrices, moduli, eigenvalues = self.get_elastic_constants_order2()
-            sec_scc.x_elastic_2nd_order_constants_notation_matrix = matrices['voigt']
-            sec_scc.x_elastic_2nd_order_constants_matrix = matrices['elastic_constant']
-            sec_scc.x_elastic_2nd_order_constants_compliance_matrix = matrices['compliance']
+            sec_scc.second_order_constants_notation_matrix = matrices['voigt']
+            sec_scc.second_order_constants_matrix = matrices['elastic_constant']
+            sec_scc.second_order_constants_compliance_matrix = matrices['compliance']
 
-            sec_scc.x_elastic_Voigt_bulk_modulus = moduli.get('B_V', moduli.get('K_V'))
-            sec_scc.x_elastic_Voigt_shear_modulus = moduli['G_V']
+            sec_scc.Voigt_bulk_modulus = moduli.get('B_V', moduli.get('K_V'))
+            sec_scc.Voigt_shear_modulus = moduli['G_V']
 
-            sec_scc.x_elastic_Reuss_bulk_modulus = moduli.get('B_R', moduli.get('K_R'))
-            sec_scc.x_elastic_Reuss_shear_modulus = moduli['G_R']
+            sec_scc.Reuss_bulk_modulus = moduli.get('B_R', moduli.get('K_R'))
+            sec_scc.Reuss_shear_modulus = moduli['G_R']
 
-            sec_scc.x_elastic_Hill_bulk_modulus = moduli.get('B_H', moduli.get('K_H'))
-            sec_scc.x_elastic_Hill_shear_modulus = moduli['G_H']
+            sec_scc.Hill_bulk_modulus = moduli.get('B_H', moduli.get('K_H'))
+            sec_scc.Hill_shear_modulus = moduli['G_H']
 
-            sec_scc.x_elastic_Voigt_Young_modulus = moduli['E_V']
-            sec_scc.x_elastic_Voigt_Poisson_ratio = moduli['nu_V']
-            sec_scc.x_elastic_Reuss_Young_modulus = moduli['E_R']
-            sec_scc.x_elastic_Reuss_Poisson_ratio = moduli['nu_R']
-            sec_scc.x_elastic_Hill_Young_modulus = moduli['E_H']
-            sec_scc.x_elastic_Hill_Poisson_ratio = moduli['nu_H']
+            sec_scc.Voigt_Young_modulus = moduli['E_V']
+            sec_scc.Voigt_Poisson_ratio = moduli['nu_V']
+            sec_scc.Reuss_Young_modulus = moduli['E_R']
+            sec_scc.Reuss_Poisson_ratio = moduli['nu_R']
+            sec_scc.Hill_Young_modulus = moduli['E_H']
+            sec_scc.Hill_Poisson_ratio = moduli['nu_H']
 
-            sec_scc.x_elastic_eigenvalues = eigenvalues
+            sec_scc.elastic_eigenvalues = eigenvalues
 
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
 
-            sec_scc.x_elastic_3rd_order_constants_matrix = elastic_constant * ureg.GPa
+            sec_scc.third_order_constants_matrix = elastic_constant * ureg.GPa
 
     def init_parser(self):
         self._deform_dirs = None
@@ -631,15 +630,15 @@ class ElasticParser(FairdiParser):
         sec_system.x_elastic_unit_cell_volume = volume
 
         sec_method = sec_run.m_create(Method)
-        sec_method.x_elastic_elastic_constant_order = self.info['order']
-        sec_method.x_elastic_calculation_method = self.info['calculation_method']
-        sec_method.x_elastic_code = self.info['code_name']
-        sec_method.x_elastic_max_lagrangian_strain = self.info['max_strain']
-        sec_method.x_elastic_number_of_distorted_structures = self.info['n_strains']
+        sec_method.elastic_constant_order = self.info['order']
+        sec_method.elastic_calculation_method = self.info['calculation_method']
+        sec_method.elastic_code = self.info['code_name']
+        sec_method.max_lagrangian_strain = self.info['max_strain']
+        sec_method.number_of_distorted_structures = self.info['n_strains']
 
         deformation_types = self.get_deformation_types()
-        sec_method.x_elastic_deformation_types = deformation_types
-        sec_method.x_elastic_number_of_deformations = len(self.deformation_dirs)
+        sec_method.deformation_types = deformation_types
+        sec_method.number_of_deformations = len(self.deformation_dirs)
 
         references = self.get_references_to_calculations()
         sec_scc = sec_run.m_create(SingleConfigurationCalculation)
