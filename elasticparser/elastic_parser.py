@@ -557,32 +557,32 @@ class ElasticParser(FairdiParser):
 
         if order == 2:
             matrices, moduli, eigenvalues = self.get_elastic_constants_order2()
-            sec_scc.second_order_constants_notation_matrix = matrices['voigt']
-            sec_scc.second_order_constants_matrix = matrices['elastic_constant']
-            sec_scc.second_order_constants_compliance_matrix = matrices['compliance']
+            sec_scc.elastic_constants_notation_matrix_second_order = matrices['voigt']
+            sec_scc.elastic_constants_matrix_second_order = matrices['elastic_constant']
+            sec_scc.compliance_matrix_second_order = matrices['compliance']
 
-            sec_scc.Voigt_bulk_modulus = moduli.get('B_V', moduli.get('K_V'))
-            sec_scc.Voigt_shear_modulus = moduli['G_V']
+            sec_scc.bulk_modulus_Voigt = moduli.get('B_V', moduli.get('K_V'))
+            sec_scc.shear_modulus_Voigt = moduli['G_V']
 
-            sec_scc.Reuss_bulk_modulus = moduli.get('B_R', moduli.get('K_R'))
-            sec_scc.Reuss_shear_modulus = moduli['G_R']
+            sec_scc.bulk_modulus_Reuss = moduli.get('B_R', moduli.get('K_R'))
+            sec_scc.shear_modulus_Reuss = moduli['G_R']
 
-            sec_scc.Hill_bulk_modulus = moduli.get('B_H', moduli.get('K_H'))
-            sec_scc.Hill_shear_modulus = moduli['G_H']
+            sec_scc.bulk_modulus_Hill = moduli.get('B_H', moduli.get('K_H'))
+            sec_scc.shear_modulus_Hill = moduli['G_H']
 
-            sec_scc.Voigt_Young_modulus = moduli['E_V']
-            sec_scc.Voigt_Poisson_ratio = moduli['nu_V']
-            sec_scc.Reuss_Young_modulus = moduli['E_R']
-            sec_scc.Reuss_Poisson_ratio = moduli['nu_R']
-            sec_scc.Hill_Young_modulus = moduli['E_H']
-            sec_scc.Hill_Poisson_ratio = moduli['nu_H']
+            sec_scc.Young_modulus_Voigt = moduli['E_V']
+            sec_scc.Poisson_ratio_Voigt = moduli['nu_V']
+            sec_scc.Young_modulus_Reuss = moduli['E_R']
+            sec_scc.Poisson_ratio_Reuss = moduli['nu_R']
+            sec_scc.Young_modulus_Hill = moduli['E_H']
+            sec_scc.Poisson_ratio_Hill = moduli['nu_H']
 
-            sec_scc.elastic_eigenvalues = eigenvalues
+            sec_scc.eigenvalues_elastic = eigenvalues
 
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
 
-            sec_scc.third_order_constants_matrix = elastic_constant * ureg.GPa
+            sec_scc.elastic_constants_matrix_third_order = elastic_constant * ureg.GPa
 
     def init_parser(self):
         self._deform_dirs = None
