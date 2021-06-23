@@ -484,7 +484,7 @@ class ElasticParser(FairdiParser):
         return elastic_constant
 
     def parse_strain(self):
-        sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
+        sec_elastic = self.archive.section_workflow.section_elastic
         method = self.info['calculation_method'].lower()
 
         n_strains = self.info['n_strains']
@@ -499,7 +499,7 @@ class ElasticParser(FairdiParser):
                 self.logger.warn('Error getting strain and energy data')
                 return
 
-            sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+            sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
             sec_strain_diagram.strain_diagram_type = 'energy'
             sec_strain_diagram.strain_diagram_number_of_eta = len(strain[0])
             sec_strain_diagram.strain_diagram_eta_values = strain
@@ -512,7 +512,7 @@ class ElasticParser(FairdiParser):
 
             for diagram_type in ['cross-validation', 'd2e']:
                 for fit_order in energy_fit[diagram_type][0].keys():
-                    sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                    sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
                     sec_strain_diagram.strain_diagram_type = diagram_type
                     sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
                     sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
@@ -528,9 +528,9 @@ class ElasticParser(FairdiParser):
                 stress_i = np.transpose(np.array(stress[diagram_type]), axes=(2, 0, 1))
 
                 for si in range(6):
-                    sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                    sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
                     sec_strain_diagram.strain_diagram_type = diagram_type
-                    sec_strain_diagram.strain_diagram_stress_Voigt_component = si + 1
+                    sec_strain_diagram.strain_diagram_stress_voigt_component = si + 1
                     sec_strain_diagram.strain_diagram_number_of_eta = len(strain_i[0])
                     sec_strain_diagram.strain_diagram_eta_values = strain_i
                     sec_strain_diagram.strain_diagram_values = stress_i[si]
@@ -542,47 +542,47 @@ class ElasticParser(FairdiParser):
 
                 for si in range(6):
                     for fit_order in stress_fit[diagram_type][si][0].keys():
-                        sec_strain_diagram = sec_scc.m_create(StrainDiagrams)
+                        sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
                         sec_strain_diagram.strain_diagram_type = diagram_type
-                        sec_strain_diagram.strain_diagram_stress_Voigt_component = si + 1
+                        sec_strain_diagram.strain_diagram_stress_voigt_component = si + 1
                         sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
                         sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
                         sec_strain_diagram.strain_diagram_eta_values = stress_fit[diagram_type][si][0][fit_order]
                         sec_strain_diagram.strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
 
     def parse_elastic_constant(self):
-        sec_scc = self.archive.section_run[-1].section_single_configuration_calculation[-1]
+        sec_elastic = self.archive.section_workflow.section_elastic
 
         order = self.info['order']
 
         if order == 2:
             matrices, moduli, eigenvalues = self.get_elastic_constants_order2()
-            sec_scc.elastic_constants_notation_matrix_second_order = matrices['voigt']
-            sec_scc.elastic_constants_matrix_second_order = matrices['elastic_constant']
-            sec_scc.compliance_matrix_second_order = matrices['compliance']
+            sec_elastic.elastic_constants_notation_matrix_second_order = matrices['voigt']
+            sec_elastic.elastic_constants_matrix_second_order = matrices['elastic_constant']
+            sec_elastic.compliance_matrix_second_order = matrices['compliance']
 
-            sec_scc.bulk_modulus_Voigt = moduli.get('B_V', moduli.get('K_V'))
-            sec_scc.shear_modulus_Voigt = moduli['G_V']
+            sec_elastic.bulk_modulus_voigt = moduli.get('B_V', moduli.get('K_V'))
+            sec_elastic.shear_modulus_voigt = moduli['G_V']
 
-            sec_scc.bulk_modulus_Reuss = moduli.get('B_R', moduli.get('K_R'))
-            sec_scc.shear_modulus_Reuss = moduli['G_R']
+            sec_elastic.bulk_modulus_reuss = moduli.get('B_R', moduli.get('K_R'))
+            sec_elastic.shear_modulus_reuss = moduli['G_R']
 
-            sec_scc.bulk_modulus_Hill = moduli.get('B_H', moduli.get('K_H'))
-            sec_scc.shear_modulus_Hill = moduli['G_H']
+            sec_elastic.bulk_modulus_hill = moduli.get('B_H', moduli.get('K_H'))
+            sec_elastic.shear_modulus_hill = moduli['G_H']
 
-            sec_scc.Young_modulus_Voigt = moduli['E_V']
-            sec_scc.Poisson_ratio_Voigt = moduli['nu_V']
-            sec_scc.Young_modulus_Reuss = moduli['E_R']
-            sec_scc.Poisson_ratio_Reuss = moduli['nu_R']
-            sec_scc.Young_modulus_Hill = moduli['E_H']
-            sec_scc.Poisson_ratio_Hill = moduli['nu_H']
+            sec_elastic.young_modulus_voigt = moduli['E_V']
+            sec_elastic.poisson_ratio_voigt = moduli['nu_V']
+            sec_elastic.young_modulus_reuss = moduli['E_R']
+            sec_elastic.poisson_ratio_reuss = moduli['nu_R']
+            sec_elastic.young_modulus_hill = moduli['E_H']
+            sec_elastic.poisson_ratio_hill = moduli['nu_H']
 
-            sec_scc.eigenvalues_elastic = eigenvalues
+            sec_elastic.eigenvalues_elastic = eigenvalues
 
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
 
-            sec_scc.elastic_constants_matrix_third_order = elastic_constant * ureg.GPa
+            sec_elastic.elastic_constants_matrix_third_order = elastic_constant * ureg.GPa
 
     def init_parser(self):
         self._deform_dirs = None
@@ -630,15 +630,6 @@ class ElasticParser(FairdiParser):
         sec_system.x_elastic_unit_cell_volume = volume
 
         sec_method = sec_run.m_create(Method)
-        sec_method.elastic_constant_order = self.info['order']
-        sec_method.elastic_calculation_method = self.info['calculation_method']
-        sec_method.elastic_code = self.info['code_name']
-        sec_method.max_lagrangian_strain = self.info['max_strain']
-        sec_method.number_of_distorted_structures = self.info['n_strains']
-
-        deformation_types = self.get_deformation_types()
-        sec_method.deformation_types = deformation_types
-        sec_method.number_of_deformations = len(self.deformation_dirs)
 
         references = self.get_references_to_calculations()
         sec_scc = sec_run.m_create(SingleConfigurationCalculation)
@@ -653,16 +644,21 @@ class ElasticParser(FairdiParser):
             sec_fit_par.x_elastic_fitting_parameters_eta = fit_input[0]
             sec_fit_par.x_elastic_fitting_parameters_polynomial_order = fit_input[1]
 
-        self.parse_strain()
-
-        self.parse_elastic_constant()
-
         sec_scc.single_configuration_to_calculation_method_ref = sec_method
         sec_scc.single_configuration_calculation_to_system_ref = sec_system
 
         sec_workflow = self.archive.m_create(Workflow)
         sec_workflow.workflow_type = 'elastic'
         sec_elastic = sec_workflow.m_create(Elastic)
-        sec_elastic.elastic_calculation_method = self.info['calculation_method'].lower()
+        sec_elastic.energy_stress_calculator = self.info['code_name']
+        sec_elastic.calculation_method = self.info['calculation_method'].lower()
         sec_elastic.elastic_constants_order = self.info['order']
         sec_elastic.strain_maximum = self.info['max_strain']
+        sec_elastic.n_strains = self.info['n_strains']
+
+        deformation_types = self.get_deformation_types()
+        sec_elastic.n_deformations = len(self.deformation_dirs)
+        sec_elastic.deformation_types = deformation_types
+
+        self.parse_strain()
+        self.parse_elastic_constant()
