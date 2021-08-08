@@ -19,17 +19,19 @@
 import os
 import numpy as np
 import logging
-from ase import Atoms
+from ase import Atoms as aseAtoms
 
 from nomad.units import ureg
 from nomad.parsing.parser import FairdiParser
 from nomad.parsing.file_parser import Quantity, TextParser
-from nomad.datamodel.metainfo.common_dft import Run, System, SingleConfigurationCalculation,\
-    Method, CalculationToCalculationRefs, Workflow, Elastic, StrainDiagrams
+
+from nomad.datamodel.metainfo.run.run import Run, Program
+from nomad.datamodel.metainfo.run.method import Method
+from nomad.datamodel.metainfo.run.system import System, Atoms
+from nomad.datamodel.metainfo.run.calculation import Calculation, CalculationReference
+from nomad.datamodel.metainfo.workflow import Workflow, Elastic, StrainDiagrams
 
 from elasticparser.metainfo.elastic import x_elastic_section_fitting_parameters
-
-from .metainfo import m_env
 
 
 class InfoParser(TextParser):
@@ -171,7 +173,6 @@ class ElasticParser(FairdiParser):
             name='parsers/elastic', code_name='elastic', code_homepage='http://exciting-code.org/elastic',
             mainfile_contents_re=r'\s*Order of elastic constants\s*=\s*[0-9]+\s*',
             mainfile_name_re=(r'.*/INFO_ElaStic'))
-        self._metainfo_env = m_env
         self._mainfile = None
         self.logger = None
         self._deform_dirs = None
@@ -231,7 +232,7 @@ class ElasticParser(FairdiParser):
         if cellpar is None or sym is None or pos is None:
             return
 
-        structure = Atoms(cell=cellpar, scaled_positions=pos, symbols=sym, pbc=True)
+        structure = aseAtoms(cell=cellpar, scaled_positions=pos, symbols=sym, pbc=True)
 
         positions = structure.get_positions()
         positions = positions * ureg.angstrom
@@ -484,7 +485,7 @@ class ElasticParser(FairdiParser):
         return elastic_constant
 
     def parse_strain(self):
-        sec_elastic = self.archive.section_workflow.section_elastic
+        sec_elastic = self.archive.workflow[0].elastic
         method = self.info['calculation_method'].lower()
 
         n_strains = self.info['n_strains']
@@ -551,7 +552,7 @@ class ElasticParser(FairdiParser):
                         sec_strain_diagram.strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
 
     def parse_elastic_constant(self):
-        sec_elastic = self.archive.section_workflow.section_elastic
+        sec_elastic = self.archive.workflow[0].elastic
 
         order = self.info['order']
 
@@ -612,31 +613,29 @@ class ElasticParser(FairdiParser):
 
         sec_run = self.archive.m_create(Run)
 
-        sec_run.program_name = 'elastic'
-        sec_run.program_version = '1.0'
+        sec_run.program = Program(name='elastic', version='1.0')
 
         sec_system = sec_run.m_create(System)
 
         symbols_positions_cell = self.get_structure_info()
         volume = self.info['equilibrium_volume']
 
+        sec_atoms = sec_system.m_create(Atoms)
         if symbols_positions_cell is not None:
-            sec_system.atom_labels = symbols_positions_cell[0]
-            sec_system.atom_positions = symbols_positions_cell[1]
-            sec_system.simulation_cell = symbols_positions_cell[2]
-            sec_system.lattice_vectors = symbols_positions_cell[2]
-        sec_system.configuration_periodic_dimensions = [True, True, True]
+            sec_atoms.labels = symbols_positions_cell[0]
+            sec_atoms.positions = symbols_positions_cell[1]
+            sec_atoms.lattice_vectors = symbols_positions_cell[2]
+        sec_atoms.periodic = [True, True, True]
         sec_system.x_elastic_space_group_number = self.info['space_group_number']
         sec_system.x_elastic_unit_cell_volume = volume
 
         sec_method = sec_run.m_create(Method)
 
         references = self.get_references_to_calculations()
-        sec_scc = sec_run.m_create(SingleConfigurationCalculation)
+        sec_scc = sec_run.m_create(Calculation)
         for reference in references:
-            sec_calc_ref = sec_scc.m_create(CalculationToCalculationRefs)
-            sec_calc_ref.calculation_to_calculation_external_url = reference
-            sec_calc_ref.calculation_to_calculation_kind = 'source_calculation'
+            sec_scc.calculation_ref.append(
+                CalculationReference(external_url=reference, kind='source_calculation'))
 
         fit_input = self.get_input()
         if fit_input is not None:

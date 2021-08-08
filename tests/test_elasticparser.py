@@ -36,20 +36,20 @@ def test_2nd(parser):
     archive = EntryArchive()
     parser.parse('tests/data/2nd/INFO_ElaStic', archive, None)
 
-    sec_system = archive.section_run[0].section_system[0]
-    assert np.shape(sec_system.atom_positions) == (8, 3)
-    assert sec_system.atom_positions[3][1].magnitude == approx(2.5186875e-10)
-    assert sec_system.lattice_vectors[2][2].magnitude == approx(6.7165e-10)
+    sec_system = archive.run[0].system[0]
+    assert np.shape(sec_system.atoms.positions) == (8, 3)
+    assert sec_system.atoms.positions[3][1].magnitude == approx(2.5186875e-10)
+    assert sec_system.atoms.lattice_vectors[2][2].magnitude == approx(6.7165e-10)
     assert sec_system.x_elastic_space_group_number == 227
 
-    sec_method = archive.section_run[0].section_method[0]
+    sec_method = archive.run[0].method[0]
     sec_fit_parameters = sec_method.x_elastic_section_fitting_parameters[0]
     assert sec_fit_parameters.x_elastic_fitting_parameters_eta[0] == 0.05
 
-    sec_elastic = archive.section_workflow.section_elastic
+    sec_elastic = archive.workflow[0].elastic
     assert sec_elastic.energy_stress_calculator == 'exciting'
     assert sec_elastic.deformation_types[2][5] == '2eta'
-    sec_strain = sec_elastic.section_strain_diagrams
+    sec_strain = sec_elastic.strain_diagrams
     assert len(sec_strain) == 7
     assert sec_strain[0].strain_diagram_eta_values[1][3] == -0.02
     assert sec_strain[0].strain_diagram_values[2][5] == approx(-3.30877062e-16)
@@ -75,16 +75,16 @@ def test_2nd(parser):
     assert sec_elastic.poisson_ratio_hill == 0.08
     assert sec_elastic.eigenvalues_elastic[1].magnitude == approx(1.3481e+12)
 
-    sec_scc = archive.section_run[0].section_single_configuration_calculation[0]
-    assert len(sec_scc.section_calculation_to_calculation_refs) == 33
+    sec_scc = archive.run[0].calculation[0]
+    assert len(sec_scc.calculation_ref) == 33
 
 
 def test_3rd(parser):
     archive = EntryArchive()
     parser.parse('tests/data/3rd/INFO_ElaStic', archive, None)
 
-    sec_elastic = archive.section_workflow.section_elastic
-    sec_strain = sec_elastic.section_strain_diagrams
+    sec_elastic = archive.workflow[0].elastic
+    sec_strain = sec_elastic.strain_diagrams
     assert len(sec_strain) == 7
     assert len(sec_strain[1].strain_diagram_eta_values) == 10
     assert sec_strain[2].strain_diagram_eta_values[1][3] == 0.07
