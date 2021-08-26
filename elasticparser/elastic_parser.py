@@ -501,10 +501,10 @@ class ElasticParser(FairdiParser):
                 return
 
             sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
-            sec_strain_diagram.strain_diagram_type = 'energy'
-            sec_strain_diagram.strain_diagram_number_of_eta = len(strain[0])
-            sec_strain_diagram.strain_diagram_eta_values = strain
-            sec_strain_diagram.strain_diagram_values = energy
+            sec_strain_diagram.type = 'energy'
+            sec_strain_diagram.n_eta = len(strain[0])
+            sec_strain_diagram.eta = strain
+            sec_strain_diagram.value = energy
 
             energy_fit = self.get_energy_fit()
             if not energy_fit:
@@ -514,11 +514,11 @@ class ElasticParser(FairdiParser):
             for diagram_type in ['cross-validation', 'd2e']:
                 for fit_order in energy_fit[diagram_type][0].keys():
                     sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
-                    sec_strain_diagram.strain_diagram_type = diagram_type
-                    sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
-                    sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
-                    sec_strain_diagram.strain_diagram_eta_values = energy_fit[diagram_type][0][fit_order]
-                    sec_strain_diagram.strain_diagram_values = energy_fit[diagram_type][1][fit_order]
+                    sec_strain_diagram.type = diagram_type
+                    sec_strain_diagram.polynomial_fit_order = int(fit_order[:-2])
+                    sec_strain_diagram.n_eta = poly_fit.get(fit_order, None)
+                    sec_strain_diagram.eta = energy_fit[diagram_type][0][fit_order]
+                    sec_strain_diagram.value = energy_fit[diagram_type][1][fit_order]
 
         elif method == 'stress':
             strain, stress = self.get_strain_stress()
@@ -530,11 +530,11 @@ class ElasticParser(FairdiParser):
 
                 for si in range(6):
                     sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
-                    sec_strain_diagram.strain_diagram_type = diagram_type
-                    sec_strain_diagram.strain_diagram_stress_voigt_component = si + 1
-                    sec_strain_diagram.strain_diagram_number_of_eta = len(strain_i[0])
-                    sec_strain_diagram.strain_diagram_eta_values = strain_i
-                    sec_strain_diagram.strain_diagram_values = stress_i[si]
+                    sec_strain_diagram.type = diagram_type
+                    sec_strain_diagram.stress_voigt_component = si + 1
+                    sec_strain_diagram.n_eta = len(strain_i[0])
+                    sec_strain_diagram.eta = strain_i
+                    sec_strain_diagram.value = stress_i[si]
 
             stress_fit = self.get_stress_fit()
             for diagram_type in ['cross-validation', 'dtn']:
@@ -544,12 +544,12 @@ class ElasticParser(FairdiParser):
                 for si in range(6):
                     for fit_order in stress_fit[diagram_type][si][0].keys():
                         sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
-                        sec_strain_diagram.strain_diagram_type = diagram_type
-                        sec_strain_diagram.strain_diagram_stress_voigt_component = si + 1
-                        sec_strain_diagram.strain_diagram_polynomial_fit_order = int(fit_order[:-2])
-                        sec_strain_diagram.strain_diagram_number_of_eta = poly_fit.get(fit_order, None)
-                        sec_strain_diagram.strain_diagram_eta_values = stress_fit[diagram_type][si][0][fit_order]
-                        sec_strain_diagram.strain_diagram_values = np.array(stress_fit[diagram_type][si][1][fit_order])
+                        sec_strain_diagram.type = diagram_type
+                        sec_strain_diagram.stress_voigt_component = si + 1
+                        sec_strain_diagram.polynomial_fit_order = int(fit_order[:-2])
+                        sec_strain_diagram.n_eta = poly_fit.get(fit_order, None)
+                        sec_strain_diagram.eta = stress_fit[diagram_type][si][0][fit_order]
+                        sec_strain_diagram.value = np.array(stress_fit[diagram_type][si][1][fit_order])
 
     def parse_elastic_constant(self):
         sec_elastic = self.archive.workflow[0].elastic

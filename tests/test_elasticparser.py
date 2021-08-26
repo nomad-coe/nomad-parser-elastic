@@ -51,12 +51,12 @@ def test_2nd(parser):
     assert sec_elastic.deformation_types[2][5] == '2eta'
     sec_strain = sec_elastic.strain_diagrams
     assert len(sec_strain) == 7
-    assert sec_strain[0].strain_diagram_eta_values[1][3] == -0.02
-    assert sec_strain[0].strain_diagram_values[2][5] == approx(-3.30877062e-16)
-    assert sec_strain[3].strain_diagram_type == 'cross-validation'
-    assert sec_strain[2].strain_diagram_eta_values[1][2] == 0.03
-    assert sec_strain[6].strain_diagram_values[2][4] == approx(6.8708895e+12)
-    assert sec_strain[4].strain_diagram_polynomial_fit_order == 6
+    assert sec_strain[0].eta[1][3] == -0.02
+    assert sec_strain[0].value[2][5] == approx(-3.30877062e-16)
+    assert sec_strain[3].type == 'cross-validation'
+    assert sec_strain[2].eta[1][2] == 0.03
+    assert sec_strain[6].value[2][4] == approx(6.8708895e+12)
+    assert sec_strain[4].polynomial_fit_order == 6
 
     assert sec_elastic.elastic_constants_notation_matrix_second_order[1][2] == 'C12'
     assert sec_elastic.elastic_constants_matrix_second_order[0][2].magnitude == approx(1.008e+11)
@@ -86,9 +86,9 @@ def test_3rd(parser):
     sec_elastic = archive.workflow[0].elastic
     sec_strain = sec_elastic.strain_diagrams
     assert len(sec_strain) == 7
-    assert len(sec_strain[1].strain_diagram_eta_values) == 10
-    assert sec_strain[2].strain_diagram_eta_values[1][3] == 0.07
-    assert sec_strain[3].strain_diagram_values[8][7] == approx(2.06899957e-23)
+    assert len(sec_strain[1].eta) == 10
+    assert sec_strain[2].eta[1][3] == 0.07
+    assert sec_strain[3].value[8][7] == approx(2.06899957e-23)
 
     assert sec_elastic.elastic_constants_matrix_third_order[3][1][3].magnitude == approx(1.274e+10)
     assert sec_elastic.elastic_constants_matrix_third_order[5][2][5].magnitude == approx(1.2825e+10)

@@ -25,6 +25,9 @@ from nomad.metainfo import (  # pylint: disable=unused-import
 from nomad.datamodel.metainfo import run
 
 
+m_package = Package()
+
+
 class x_elastic_section_strain_diagrams(MSection):
     '''
     section collecting the data of the strain diagrams
