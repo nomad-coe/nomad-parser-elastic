@@ -76,7 +76,9 @@ def test_2nd(parser):
     assert sec_elastic.eigenvalues_elastic[1].magnitude == approx(1.3481e+12)
 
     sec_scc = archive.run[0].calculation[0]
-    assert len(sec_scc.calculation_ref) == 33
+    assert len(sec_scc.calculations_path) == 33
+    assert sec_scc.method_ref is not None
+    assert sec_scc.system_ref is not None
 
 
 def test_3rd(parser):

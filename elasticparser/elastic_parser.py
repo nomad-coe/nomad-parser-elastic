@@ -25,10 +25,10 @@ from nomad.units import ureg
 from nomad.parsing.parser import FairdiParser
 from nomad.parsing.file_parser import Quantity, TextParser
 
-from nomad.datamodel.metainfo.run.run import Run, Program
-from nomad.datamodel.metainfo.run.method import Method
-from nomad.datamodel.metainfo.run.system import System, Atoms
-from nomad.datamodel.metainfo.run.calculation import Calculation, CalculationReference
+from nomad.datamodel.metainfo.simulation.run import Run, Program
+from nomad.datamodel.metainfo.simulation.method import Method
+from nomad.datamodel.metainfo.simulation.system import System, Atoms
+from nomad.datamodel.metainfo.simulation.calculation import Calculation
 from nomad.datamodel.metainfo.workflow import Workflow, Elastic, StrainDiagrams
 
 from elasticparser.metainfo.elastic import x_elastic_section_fitting_parameters
@@ -631,11 +631,8 @@ class ElasticParser(FairdiParser):
 
         sec_method = sec_run.m_create(Method)
 
-        references = self.get_references_to_calculations()
         sec_scc = sec_run.m_create(Calculation)
-        for reference in references:
-            sec_scc.calculation_ref.append(
-                CalculationReference(external_url=reference, kind='source_calculation'))
+        sec_scc.calculations_path = self.get_references_to_calculations()
 
         fit_input = self.get_input()
         if fit_input is not None:
@@ -643,8 +640,8 @@ class ElasticParser(FairdiParser):
             sec_fit_par.x_elastic_fitting_parameters_eta = fit_input[0]
             sec_fit_par.x_elastic_fitting_parameters_polynomial_order = fit_input[1]
 
-        sec_scc.single_configuration_to_calculation_method_ref = sec_method
-        sec_scc.single_configuration_calculation_to_system_ref = sec_system
+        sec_scc.method_ref = sec_method
+        sec_scc.system_ref = sec_system
 
         sec_workflow = self.archive.m_create(Workflow)
         sec_workflow.workflow_type = 'elastic'
