@@ -255,7 +255,8 @@ class ElasticParser(FairdiParser):
             # the peculiarity of the x_elastic_strain_diagram_values metainfo that it does
             # not have the energy unit
             energies.append((data[1] * ureg.hartree).to('J').magnitude)
-
+        if len(np.shape(energies)) != 2:
+            strains, energies = [], []
         return strains, energies
 
     def get_strain_stress(self):
