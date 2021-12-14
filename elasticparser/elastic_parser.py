@@ -177,6 +177,7 @@ class ElasticParser(FairdiParser):
         self.logger = None
         self._deform_dirs = None
         self._deform_dir_prefix = 'Dst'
+        self._dirs = []
         self.info = InfoParser()
         self.structure = StructureParser()
         self.distorted_parameters = DistortedParametersParser()
@@ -187,11 +188,20 @@ class ElasticParser(FairdiParser):
     @property
     def deformation_dirs(self):
         if self._deform_dirs is None:
-            dirs = os.listdir(self.maindir)
             self._deform_dirs = [
-                os.path.join(self.maindir, d) for d in dirs if d.startswith(self._deform_dir_prefix)]
+                os.path.join(self.maindir, d) for d in self._dirs if d.startswith(self._deform_dir_prefix)]
 
         return self._deform_dirs
+
+    def get_elastic_files(self, filename, extension, dirname=None):
+        dirs = self._dirs if dirname is None else os.listdir(dirname)
+        dirname = self.maindir if dirname is None else dirname
+        filenames = [d for d in dirs if filename in d and d.endswith(extension)]
+        if len(filenames) > 1:
+            filenames = [d for d in filenames if d.startswith(filename)]
+        if len(filenames) == 0:
+            return
+        return os.path.join(dirname, filenames[0])
 
     def get_references_to_calculations(self):
         def output_file(dirname):
@@ -408,8 +418,7 @@ class ElasticParser(FairdiParser):
         return eta_ec, fit_ec
 
     def get_elastic_constants_order2(self):
-        path = os.path.join(self.maindir, 'ElaStic_2nd.out')
-
+        path = self.get_elastic_files('ElaStic_2nd', 'out')
         self.elastic_constant_2.mainfile = path
 
         matrices = dict()
@@ -427,7 +436,7 @@ class ElasticParser(FairdiParser):
         return matrices, moduli, eigenvalues
 
     def get_elastic_constants_order3(self):
-        path = os.path.join(self.maindir, 'ElaStic_3rd.out')
+        path = self.get_elastic_files('ElaStic_3rd.out', 'out')
         self.elastic_constant_3.mainfile = path
 
         elastic_constant_str = self.elastic_constant_3.get('elastic_constant')
@@ -539,10 +548,9 @@ class ElasticParser(FairdiParser):
 
             stress_fit = self.get_stress_fit()
             for diagram_type in ['cross-validation', 'dtn']:
-                if stress_fit.get(diagram_type, None) is None:
-                    continue
-
                 for si in range(6):
+                    if len(stress_fit[diagram_type][si]) == 0:
+                        continue
                     for fit_order in stress_fit[diagram_type][si][0].keys():
                         sec_strain_diagram = sec_elastic.m_create(StrainDiagrams)
                         sec_strain_diagram.type = diagram_type
@@ -559,32 +567,32 @@ class ElasticParser(FairdiParser):
 
         if order == 2:
             matrices, moduli, eigenvalues = self.get_elastic_constants_order2()
-            sec_elastic.elastic_constants_notation_matrix_second_order = matrices['voigt']
-            sec_elastic.elastic_constants_matrix_second_order = matrices['elastic_constant']
-            sec_elastic.compliance_matrix_second_order = matrices['compliance']
+            sec_elastic.elastic_constants_notation_matrix_second_order = matrices.get('voigt')
+            sec_elastic.elastic_constants_matrix_second_order = matrices.get('elastic_constant')
+            sec_elastic.compliance_matrix_second_order = matrices.get('compliance')
 
             sec_elastic.bulk_modulus_voigt = moduli.get('B_V', moduli.get('K_V'))
-            sec_elastic.shear_modulus_voigt = moduli['G_V']
+            sec_elastic.shear_modulus_voigt = moduli.get('G_V')
 
             sec_elastic.bulk_modulus_reuss = moduli.get('B_R', moduli.get('K_R'))
-            sec_elastic.shear_modulus_reuss = moduli['G_R']
+            sec_elastic.shear_modulus_reuss = moduli.get('G_R')
 
             sec_elastic.bulk_modulus_hill = moduli.get('B_H', moduli.get('K_H'))
-            sec_elastic.shear_modulus_hill = moduli['G_H']
+            sec_elastic.shear_modulus_hill = moduli.get('G_H')
 
-            sec_elastic.young_modulus_voigt = moduli['E_V']
-            sec_elastic.poisson_ratio_voigt = moduli['nu_V']
-            sec_elastic.young_modulus_reuss = moduli['E_R']
-            sec_elastic.poisson_ratio_reuss = moduli['nu_R']
-            sec_elastic.young_modulus_hill = moduli['E_H']
-            sec_elastic.poisson_ratio_hill = moduli['nu_H']
+            sec_elastic.young_modulus_voigt = moduli.get('E_V')
+            sec_elastic.poisson_ratio_voigt = moduli.get('nu_V')
+            sec_elastic.young_modulus_reuss = moduli.get('E_R')
+            sec_elastic.poisson_ratio_reuss = moduli.get('nu_R')
+            sec_elastic.young_modulus_hill = moduli.get('E_H')
+            sec_elastic.poisson_ratio_hill = moduli.get('nu_H')
 
             sec_elastic.eigenvalues_elastic = eigenvalues
 
         elif order == 3:
             elastic_constant = self.get_elastic_constants_order3()
-
-            sec_elastic.elastic_constants_matrix_third_order = elastic_constant * ureg.GPa
+            if elastic_constant is not None:
+                sec_elastic.elastic_constants_matrix_third_order = elastic_constant * ureg.GPa
 
     def init_parser(self):
         self._deform_dirs = None
@@ -596,6 +604,7 @@ class ElasticParser(FairdiParser):
         self.fit.logger = self.logger
         self.elastic_constant_2.logger = self.logger
         self.elastic_constant_3.logger = self.logger
+        self._dirs = os.listdir(self.maindir)
 
     def reuse_parser(self, parser):
         self.info.quantities = parser.info.quantities
